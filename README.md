@@ -35,7 +35,7 @@ The server has four tasks to perform:
     ```
 
 3. Respond to all other HTTP requests with a `404`.
-4. Every 1000 milliseconds (1 second), the server should broadcast a message on all open connections. The data should simply be the current unix timestamp, including milliseconds. Example packet would be:
+4. Every 1000 milliseconds, the server should broadcast a message on all open connections. The message should be dispatched from a central location - imagine the message is received through an HTTP POST request and should be broadcasted to all clients (ie. we don't know the message content in advance).The data should simply be the current unix timestamp, including milliseconds. Example packet would be:
     
     ```
     data: 1418071333619\n\n
