@@ -34,7 +34,7 @@ function writeConnectionCount(res) {
 }
 
 function write404(res) {
-    res.writeHead(400, {
+    res.writeHead(404, {
         'Content-Type': 'text/plain',
         'Connection': 'close'
     });

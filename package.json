@@ -1,0 +1,22 @@
+{
+  "name": "sse-broadcast-benchmark",
+  "version": "1.0.0",
+  "description": "An attempt to see how different languages/implementations handle broadcasting messages to a large number of open connections",
+  "main": "node.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rexxars/sse-broadcast-benchmark.git"
+  },
+  "author": "Espen Hovlandsdal <espen@hovlandsdal.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rexxars/sse-broadcast-benchmark/issues"
+  },
+  "homepage": "https://github.com/rexxars/sse-broadcast-benchmark",
+  "dependencies": {
+    "tape": "^3.0.3"
+  }
+}
