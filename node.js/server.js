@@ -7,6 +7,8 @@ var http = require('http');
 var port = process.argv[2] || 1942;
 var clients = [], numClients = 0;
 
+http.globalAgent.maxSockets = Infinity;
+
 http.createServer(function(req, res) {
     if (req.url.indexOf('/connections') === 0) {
         writeConnectionCount(res);

@@ -17,7 +17,7 @@
     "url": "https://github.com/rexxars/sse-broadcast-benchmark/issues"
   },
   "homepage": "https://github.com/rexxars/sse-broadcast-benchmark",
-  "dependencies": {
+  "devDependencies": {
     "tape": "^3.0.3"
   }
 }
