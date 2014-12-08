@@ -1,6 +1,7 @@
 {
   "name": "sse-broadcast-benchmark",
   "version": "1.0.0",
+  "private": true,
   "description": "An attempt to see how different languages/implementations handle broadcasting messages to a large number of open connections",
   "main": "node.js",
   "scripts": {
