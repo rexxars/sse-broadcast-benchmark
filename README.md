@@ -6,40 +6,40 @@ An attempt to see how different languages/implementations handle broadcasting me
 
 I wanted to make a thing where you could connect a large number of clients to a server and broadcast messages to all the clients in ~realtime. Websockets are cool, but there's a bit of overhead with regards to HTTP upgrades and whatnot, and there's really no point for two-way communication in my case.
 
-So, this thing uses SSE. SSE (Server-Sent Event/EventSource) is a really simple protocol: basically just a regular HTTP request, which you respond to with a `Content-Type` of `text/event-stream`. Instead of closing the connection, you write data to the open connections, each message a `data: <someData>\n\n`-chunk.
+So, this thing uses SSE. SSE (Server-Sent Event/EventSource) is a really simple protocol: basically just a regular HTTP request, which you respond to with a `Content-Type` of `text/event-stream`. Instead of closing the connection, you write data to the open connections, each message in the form of a `data: <someData>\n\n`-chunk.
 
 ## Rules
 
 The server has four tasks to perform:
 
 1. Respond to `/` with an open HTTP connection. Each connection should receive the following bytes when it opens:
+    
+    ```
+    :ok\n\n
+    ```
 
-```
-:ok\n\n
-```
-
-And the response headers for the request should include:
-
-```
-Content-Type: text/event-stream
-Cache-Control: no-cache
-Connection: keep-alive
-```
-
+    And the response headers for the request should include:
+    
+    ```
+    Content-Type: text/event-stream
+    Cache-Control: no-cache
+    Connection: keep-alive
+    ```
+    
 2. Respond to `/connections` with the total number of active, open connections Headers for this response should be:
-
-```
-Content-Type: text/plain
-Cache-Control: no-cache
-Connection: close
-```
+    
+    ```
+    Content-Type: text/plain
+    Cache-Control: no-cache
+    Connection: close
+    ```
 
 3. Respond to all other HTTP requests with a `404`.
 4. Every 1000 milliseconds (1 second), the server should broadcast a message on all open connections. The data should simply be the current unix timestamp, including milliseconds. Example packet would be:
-
-```
-data: 1418071333619\n\n
-```
+    
+    ```
+    data: 1418071333619\n\n
+    ```
 
 ## Testing
 
