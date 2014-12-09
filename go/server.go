@@ -72,6 +72,7 @@ func main() {
         }
     }()
 
+    fmt.Println("Listening on http://127.0.0.1:" + port + "/")
     log.Fatal(http.ListenAndServe(":" + port, nil))
 }
 
