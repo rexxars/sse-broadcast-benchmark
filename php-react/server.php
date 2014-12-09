@@ -66,4 +66,6 @@ $loop->addPeriodicTimer(1, function() use (&$connections) {
 });
 
 $socket->listen($port);
+
+echo 'Listening on http://127.0.0.1:' . $port . '/' . PHP_EOL;
 $loop->run();
