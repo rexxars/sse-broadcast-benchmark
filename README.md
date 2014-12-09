@@ -26,7 +26,7 @@ The server has four tasks to perform:
     Connection: keep-alive
     ```
     
-2. Respond to `/connections` with the total number of active, open connections Headers for this response should include:
+2. Respond to `/connections` with the total number of active, open connections. Headers for this response should include:
     
     ```
     Content-Type: text/plain
