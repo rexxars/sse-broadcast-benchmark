@@ -49,6 +49,9 @@ func (s *SSE) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+    // Consider this: Might work, might not work
+    // runtime.GOMAXPROCS(runtime.NumCPU())
+
     msgBroker = NewBroker()
     
     port := "1942"
