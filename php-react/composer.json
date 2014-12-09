@@ -1,0 +1,14 @@
+{
+    "name": "rexxars/sse-broadcast-network",
+    "description": "An attempt to see how different languages/implementations handle broadcasting messages to a large number of open connections",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Espen Hovlandsdal",
+            "email": "espen@hovlandsdal.com"
+        }
+    ],
+    "require": {
+        "react/react": "~0.4"
+    }
+}
