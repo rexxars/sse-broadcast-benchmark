@@ -12,7 +12,7 @@ http.globalAgent.maxSockets = Infinity;
 http.createServer(function(req, res) {
     if (req.url.indexOf('/connections') === 0) {
         writeConnectionCount(res);
-    } else if (req.url === '/') {
+    } else if (req.url === '/sse') {
         initClient(req, res);
     } else {
         write404(res);

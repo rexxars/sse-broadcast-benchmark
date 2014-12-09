@@ -48,14 +48,14 @@ function runTests() {
         });
     });
 
-    test('gives an SSE-connection on /', function(t) {
+    test('gives an SSE-connection on /sse', function(t) {
         var timeout = setTimeout(function() {
             req.abort();
             t.fail('did not receive :ok within 250ms');
         }, 250);
 
-        var req = http.get(url + '/', function(res) {
-            t.equal(res.statusCode, 200, '/connections should give a 200');
+        var req = http.get(url + '/sse', function(res) {
+            t.equal(res.statusCode, 200, '/sse should give a 200');
             t.equal(res.headers['content-type'], 'text/event-stream', 'type should be text/event-stream');
             t.equal(res.headers['cache-control'], 'no-cache', 'cache-control should be no-cache');
             t.equal(res.headers['connection'], 'keep-alive', 'connection should be keep-alive');
@@ -77,7 +77,7 @@ function runTests() {
 
     test('sends timestamps every second', function(t) {
         var body = '';
-        var req = http.get(url + '/', function(res) {
+        var req = http.get(url + '/sse', function(res) {
             res.on('data', function(chunk) {
                 body += chunk.toString();
             });

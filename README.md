@@ -12,7 +12,7 @@ So, this thing uses SSE. SSE (Server-Sent Event/EventSource) is a really simple 
 
 The server has four tasks to perform:
 
-1. Respond to `/` with an open HTTP connection. Each connection should receive the following bytes when it opens:
+1. Respond to `/sse` with an open HTTP connection. Each connection should receive the following bytes when it opens:
     
     ```
     :ok\n\n
@@ -26,7 +26,7 @@ The server has four tasks to perform:
     Connection: keep-alive
     ```
     
-2. Respond to `/connections` with the total number of active, open connections Headers for this response should be:
+2. Respond to `/connections` with the total number of active, open connections Headers for this response should include:
     
     ```
     Content-Type: text/plain
