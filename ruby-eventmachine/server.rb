@@ -55,7 +55,7 @@ class SSEServer < EventMachine::HttpServer::Server
   end
 
   def handle_sse
-    response = EM::DelegatedHttpResponse.new(self)
+    response = EventMachine::DelegatedHttpResponse.new(self)
     response.status = 200
     response.content_type 'text/event-stream'
     response.headers['Cache-Control'] = 'no-cache'
