@@ -21,6 +21,6 @@ Port number is by default `1942`, but can be changed with `--port <portNumber>`.
 
 ## Contributors
 
-- [Espen Hovlandsdal](https://github.com/rexxars).
+- [Espen Hovlandsdal](https://github.com/rexxars)
 
 
