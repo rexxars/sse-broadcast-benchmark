@@ -12,7 +12,7 @@ start(_Type, _Args) ->
         ]}
     ]),
     cowboy:start_http(sse_handler, 100, [
-            {port, 8080},
+            {port, 1942},
             {max_connections, infinity}
         ],
         [{env, [{dispatch, Dispatch}]}]
