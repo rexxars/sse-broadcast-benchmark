@@ -41,9 +41,16 @@ The server has four tasks to perform:
     data: 1418071333619\n\n
     ```
 
+## Additional rules
+
+* Have the implementation listen on port 1942 by default. Allowing a different port to be specified is a bonus feature, but not required.
+* Unless there is a really good reason to manually fork processes, let that task be handled outside the application
+* Feel free to print a status to stdout when the server starts
+* Don't print anything when clients connect/disconnect or similar 
+
 ## Testing
 
-I've written a simple test to ensure the four basic rules above work as expected. It's written in node.js. Run it by doing `npm test`, or if the server is not listening on port `1942`, run `node test.js <portNumber>`.
+I've written a simple test to ensure the four basic rules above work as expected. It's written in node.js. Run it by installing it's dependencies (`npm install`), then doing `npm test`. If the server is not listening on port `1942`, run `node test.js <portNumber>`.
 
 ## Contributing
 
