@@ -38,7 +38,7 @@ class SSEServer < EventMachine::HttpServer::Server
     end
   end
 
-  def http_request_errback e
+  def http_request_errback(e)
     puts e.inspect
   end
 
