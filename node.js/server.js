@@ -4,26 +4,37 @@
 'use strict';
 
 var http = require('http');
-var port = process.argv[2] || 1942;
+var cluster = require('cluster');
+var numCPUs = require('os').cpus().length;
+
+var args = getArgs();
+var port = args.port || 1942;
 var clients = [], numClients = 0;
 
 http.globalAgent.maxSockets = Infinity;
 
-http.createServer(function(req, res) {
-    if (req.url.indexOf('/connections') === 0) {
-        writeConnectionCount(res);
-    } else if (req.url === '/sse') {
-        initClient(req, res);
-    } else {
-        write404(res);
-    }
-}).listen(port, '127.0.0.1', function() {
-    console.log('Listening on http://127.0.0.1:' + port + '/');
-});
-
 setInterval(function() {
     broadcast(Date.now());
 }, 1000);
+
+if (args.cluster && cluster.isMaster) {
+    console.log('Forking ' + numCPUs + ' processes');
+    for (var i = 0; i < numCPUs; i++) {
+        cluster.fork();
+    }
+} else {
+    http.createServer(function(req, res) {
+        if (req.url.indexOf('/connections') === 0) {
+            writeConnectionCount(res);
+        } else if (req.url === '/sse') {
+            initClient(req, res);
+        } else {
+            write404(res);
+        }
+    }).listen(port, '127.0.0.1', function() {
+        console.log('Listening on http://127.0.0.1:' + port + '/');
+    });
+}
 
 function writeConnectionCount(res) {
     res.writeHead(200, {
@@ -83,4 +94,20 @@ function broadcast(data) {
         }
     }
 
+}
+
+function getArgs() {
+    var args = {}, arg;
+
+    for (var i = 2; i < process.argv.length; i++) {
+        arg = process.argv[i];
+
+        if (arg === '--port') {
+            args.port = process.argv[++i];
+        } else if (arg === '--cluster') {
+            args.cluster = true;
+        }
+    }
+
+    return args;
 }
