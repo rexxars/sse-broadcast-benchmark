@@ -11,3 +11,8 @@ $ make
 ```
 $ ERL_MAX_PORTS=268435456 _rel/eventsource_release/bin/eventsource_release start
 ```
+
+## Contributors
+
+- [André Roaldseth](https://github.com/androa)
+
