@@ -17,6 +17,7 @@ class SSEServer < EventMachine::HttpServer::Server
 
   def initialize
     super
+
     @connection = nil
   end
 
