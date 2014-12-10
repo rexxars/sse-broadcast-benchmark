@@ -45,13 +45,10 @@ class SSEServer < EventMachine::HttpServer::Server
 
   private
   def handle_connections
-    response = EM::DelegatedHttpResponse.new(self)
-    response.status = 200
-    response.content_type 'text/plain'
-    response.headers['Cache-Control'] = 'no-cache'
-    response.headers['Connection'] = 'close'
-    response.content = @@connectionCount
-    response.send_response
+    send_text_response(@@connectionCount, 200, {
+                         'Cache-Control' => 'no-cache',
+                         'Connection' => 'close'
+                       })
   end
 
   def handle_sse
@@ -73,11 +70,7 @@ class SSEServer < EventMachine::HttpServer::Server
   end
 
   def handle_404
-    response = EM::DelegatedHttpResponse.new(self)
-    response.status = 404
-    response.content_type 'text/plain'
-    response.content = 'File not found'
-    response.send_response
+    send_text_response('File not found', 404)
   end
 
   def send_headers(response)
@@ -94,6 +87,16 @@ class SSEServer < EventMachine::HttpServer::Server
     ary << "\r\n"
 
     send_data ary.join
+  end
+
+  def send_text_response(content, status, headers = {})
+    response = EventMachine::DelegatedHttpResponse.new(self)
+    response.status = status
+    response.content_type 'text/plain'
+    response.headers.merge!(headers)
+    response.content = content
+
+    response.send_response
   end
 end
 
