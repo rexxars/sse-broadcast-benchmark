@@ -106,8 +106,21 @@ function getArgs() {
             args.port = process.argv[++i];
         } else if (arg === '--cluster') {
             args.cluster = true;
+        } else if (arg === '--help') {
+            showHelp();
+            process.exit(0);
         }
     }
 
     return args;
+}
+
+function showHelp() {
+    console.log('sse-broadcast node.js implementation\n');
+    
+    console.log('  --port <portnum>\n');
+    console.log('  Set port number to set up HTTP server on. Default: 1942\n');
+
+    console.log('  --cluster\n');
+    console.log('  Enables the cluster module, forking a number of processes equal to the number of CPUs.\n');
 }
