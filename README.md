@@ -58,6 +58,12 @@ Feel free! Both optimizations, tips and new implementations are welcomed. I'd pr
 
 If you're doing a new implementation, create a folder named after the language you're writing it in, and if using some specific framework, append it to the name (eg. `node.js-express`).
 
+Also, make sure you include a `README.md`. It should explain:
+
+  - How to install any dependencies you might need
+  - How to run it
+  - A list of contributors 
+
 ## License
 
 All code in this repository is MIT-licensed. See `LICENSE`.
