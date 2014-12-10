@@ -1,7 +1,9 @@
+#!/usr/bin/env php
 <?php
 require __DIR__ . '/vendor/autoload.php';  
 
-$port = (int) (isset($argv[2]) ? $argv[2] : 1942);
+$args = getArgs();
+$port = $args['port'];
 
 $connections = [];
 $numConnections = 0;
@@ -52,6 +54,22 @@ function handleSse($request, $response) {
         $numConnections--;
         unset($connections[$index]);
     });
+}
+
+function getArgs() {
+    global $argv;
+
+    $args = ['port' => 1942];
+
+    for ($i = 0; $i < count($argv); $i++) {
+        $arg = $argv[$i];
+
+        if ($arg === '--port') {
+            $args['port'] = $argv[++$i];
+        }
+    }
+
+    return $args;
 }
 
 $loop = React\EventLoop\Factory::create();
