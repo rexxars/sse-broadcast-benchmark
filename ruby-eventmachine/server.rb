@@ -21,8 +21,6 @@ class SSEServer < EventMachine::HttpServer::Server
   end
 
   def process_http_request
-    puts  "#{@http_request_method} #{@http_request_uri} #{@http_protocol}"
-
     case @http_request_uri
     when '/connections'
       handle_connections
