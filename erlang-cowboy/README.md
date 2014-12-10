@@ -9,5 +9,5 @@ $ make
 ## To run
 
 ```
-$ _rel/eventsource_release/bin/eventsource_release start
+$ ERL_MAX_PORTS=268435456 _rel/eventsource_release/bin/eventsource_release start
 ```

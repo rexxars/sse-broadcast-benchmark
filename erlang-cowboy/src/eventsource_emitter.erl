@@ -9,7 +9,6 @@
 
 init({_Any, http}, Req, _Opts) ->
     timer:send_after(0, {message, [":ok", "\n\n"]}),
-    timer:send_after(40000, shutdown),
     Headers = [
         {<<"content-type">>, <<"text/event-stream">>},
         {<<"cache-control">>, <<"no-cache">>},
@@ -31,5 +30,5 @@ terminate(_Reason, _Req, _State) ->
 
 id() ->
     {Mega, Sec, _Micro} = os:timestamp(),
-    Id = ((Mega * 1000000 + Sec) * 1000), % + Micro,
+    Id = ((Mega * 1000000 + Sec) * 1000),
     integer_to_list(Id).
