@@ -29,3 +29,11 @@ node_modules
 
 # PHP composer vendor
 php-react/vendor
+
+# Erlang misc
+erlang-cowboy/_rel
+erlang-cowboy/.erlang.mk.*
+erlang-cowboy/deps
+erlang-cowboy/ebin
+erlang-cowboy/relx
+
