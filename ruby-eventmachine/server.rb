@@ -8,7 +8,7 @@ class SSEServer < EventMachine::HttpServer::Server
   def self.initialize_timer
     EventMachine::PeriodicTimer.new(1) do
       @@connections.each do |connection|
-        time = Time.now.to_i * 1000
+        time = (Time.now.to_f * 1000).to_i
 
         connection.send_data "data: #{time.to_s}\n\n"
       end
