@@ -11,7 +11,7 @@ $ sudo apt-get install pyton-twisted
 Additionally, you need to `bottle` and `crotchet` installed. The easiest way is by using pip:
 
 ```bash
-$ sudo pip install bottle crotchet
+$ sudo pip install bottle crochet
 ```
 
 ## Running
