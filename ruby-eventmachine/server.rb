@@ -7,10 +7,10 @@ class SSEServer < EventMachine::HttpServer::Server
 
   def self.initialize_timer
     EventMachine::PeriodicTimer.new(1) do
-      @@connections.each do |connection|
-        time = (Time.now.to_f * 1000).to_i
+      time = (Time.now.to_f * 1000).to_i.to_s
 
-        connection.send_data "data: #{time.to_s}\n\n"
+      @@connections.each do |connection|
+        connection.send_data "data: #{time}\n\n"
       end
     end
   end
