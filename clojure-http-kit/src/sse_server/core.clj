@@ -1,7 +1,6 @@
 (ns sse-server.core
   (:require [org.httpkit.server :refer [run-server with-channel on-close send! close]]
-            [org.httpkit.timer :refer [schedule-task]]
-            [clojure.pprint :refer [pprint]]))
+            [org.httpkit.timer :refer [schedule-task]]))
 
 (def channel-hub (atom {}))
 
