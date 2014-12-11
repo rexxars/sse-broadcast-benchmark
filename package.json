@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/rexxars/sse-broadcast-benchmark",
   "devDependencies": {
+    "eventsource": "^0.1.4",
     "tape": "^3.0.3"
   }
 }
