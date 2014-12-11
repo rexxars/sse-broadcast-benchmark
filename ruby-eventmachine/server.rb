@@ -100,6 +100,7 @@ class SSEServer < EventMachine::HttpServer::Server
   end
 end
 
+EventMachine.epoll
 EventMachine::run do
   port = ARGV[0] || 1942
 
