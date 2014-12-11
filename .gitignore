@@ -39,3 +39,6 @@ erlang-cowboy/relx
 
 # Python stuff
 *.pyc
+
+# Clojure
+clojure-http-kit/target
