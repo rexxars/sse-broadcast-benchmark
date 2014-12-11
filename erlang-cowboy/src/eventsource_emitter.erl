@@ -29,6 +29,6 @@ terminate(_Reason, _Req, _State) ->
     ok.
 
 id() ->
-    {Mega, Sec, _Micro} = os:timestamp(),
-    Id = ((Mega * 1000000 + Sec) * 1000),
+    {Mega, Sec, Micro} = os:timestamp(),
+    Id = round((((Mega * 1000000) + Sec) * 1000) + (Micro / 1000)),
     integer_to_list(Id).
