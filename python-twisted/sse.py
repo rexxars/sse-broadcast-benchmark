@@ -5,14 +5,19 @@ from twisted.web import resource, server
 
 def _format_sse(msg, event=None):
     data = []
+
     if event is not None:
         data.append("event: {}\n".format(event))
+
     for line in msg.splitlines():
         data.append("data: {}\n".format(line))
+
     data.append("\n")
+
     return "".join(data)
 
 class SSEResource(resource.Resource):
+
     def __init__(self):
         resource.Resource.__init__(self)
         self._listeners = []
