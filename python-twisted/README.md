@@ -32,7 +32,7 @@ $ twistd -ny server.py
 
 The solution is based on the proposed [Twisted SSE implementation](http://orestis.gr/blog/2014/02/03/wsgi-twisted-and-server-sent-events/) by [Orestis Markou](https://gist.github.com/orestis).
 
-Port number is 8005
+Port number is 1942
 
 ## Contributors
 
