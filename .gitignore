@@ -42,3 +42,8 @@ erlang-cowboy/relx
 
 # Clojure
 clojure-http-kit/target
+clojure-http-kit/.lein*
+clojure-http-kit/classes
+clojure-http-kit/lib
+clojure-http-kit/pom.xml
+clojure-http-kit/sse-server*
