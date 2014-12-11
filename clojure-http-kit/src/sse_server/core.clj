@@ -25,7 +25,7 @@
                               "Connection" "keep-alive"}
                     :body ":ok\n\n"} false)
     (swap! channel-hub assoc channel req)
-    (on-close channel (fn [status]
+    (on-close channel (fn [_]
                         (swap! channel-hub dissoc channel)))))
 
 (defn app [req]
