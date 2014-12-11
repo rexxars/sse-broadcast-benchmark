@@ -35,8 +35,9 @@
     (handle-404)))
 
 (defn notify-channels []
-  (doseq [channel (keys @channel-hub)]
-    (send! channel (str "data: " (System/currentTimeMillis) "\n\n") false)))
+  (let [time (System/currentTimeMillis)]
+    (doseq [channel (keys @channel-hub)]
+      (send! channel (str "data: " time "\n\n") false))))
 
 (defn start-timer []
   (schedule-task 1000
