@@ -37,3 +37,5 @@ erlang-cowboy/deps
 erlang-cowboy/ebin
 erlang-cowboy/relx
 
+# Python stuff
+*.pyc
