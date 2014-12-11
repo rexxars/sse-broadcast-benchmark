@@ -15,6 +15,7 @@ var probeInterval = args.probeInterval;
 var benchDuration = args.benchDuration * 1000;
 var host = 'http://' + args.host + ':' + args.port;
 var resultsFile = __dirname + '/results.json';
+var isLocal = ['localhost', '127.0.0.1'].indexOf(args.host) !== -1;
 
 http.globalAgent.maxSockets = Infinity;
 
@@ -114,12 +115,12 @@ function printReport() {
         avgDelivery: avgDeliv + 'ms',
         maxDelivery: maxDeliv + 'ms',
         minDelivery: minDeliv + 'ms',
-        avgMemory: avgMemory,
-        maxMemory: maxMemory,
-        minMemory: minMemory,
-        avgSysLoad: avgSysLoad,
-        maxSysLoad: maxSysLoad,
-        minSysLoad: minSysLoad
+        avgMemory: isLocal ? avgMemory : '',
+        maxMemory: isLocal ? maxMemory : '',
+        minMemory: isLocal ? minMemory : '',
+        avgSysLoad: isLocal ? avgSysLoad : '',
+        maxSysLoad: isLocal ? maxSysLoad : '',
+        minSysLoad: isLocal ? minSysLoad : ''
     });
 
     fs.writeFileSync(resultsFile, JSON.stringify(results, null, 4), {
@@ -147,7 +148,7 @@ function printReport() {
             result.maxDelivery,
             result.minDelivery,
             result.avgSysLoad,
-            humanize.filesize(result.avgMemory)
+            result.avgMemory ? humanize.filesize(result.avgMemory) : ''
         ]);
     });
 
