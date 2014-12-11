@@ -53,7 +53,7 @@ def start():
     l.start(1.0)
 
     main_site = twisted_server.Site(root)
-    server = internet.TCPServer(8005, main_site)
+    server = internet.TCPServer(1942, main_site)
     application = service.Application("twisted_wsgi_sse_integration")
     server.setServiceParent(application)
     return application
