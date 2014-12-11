@@ -94,7 +94,7 @@ function printReport() {
         minMemory = Math.max(0, Math.min.apply(null, memUsage)),
         resData  = '[]';
 
-    if (fs.existsSync(resultsFile)) {
+    if (fs.existsSync(resultsFile) && !args.reset) {
         resData = fs.readFileSync(resultsFile, { encoding: 'utf8' });
     }
     

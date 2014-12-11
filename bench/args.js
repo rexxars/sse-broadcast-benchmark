@@ -46,6 +46,12 @@ parser.addArgument(['--duration'], {
     required: false
 });
 
+parser.addArgument(['--reset'], {
+    help: 'Reset the previous results before writing the collected results',
+    dest: 'reset',
+    action: 'storeTrue'
+});
+
 parser.addArgument(['--profile-name'], {
     help: 'Name to use for this run - used for the resulting filename',
     dest: 'profileName',
