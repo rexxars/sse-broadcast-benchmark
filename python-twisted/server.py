@@ -4,10 +4,9 @@ crochet.no_setup()
 
 from twisted.application import internet, service
 from twisted.web import server as twisted_server, wsgi, static, resource
-from twisted.internet import reactor
+from twisted.internet import reactor, task
 from twisted.python import threadpool
 
-from threading import Timer;
 from time import time;
 
 # boilerplate to get any WSGI app running under twisted
@@ -29,15 +28,12 @@ def get_wsgi_resource(wsgi_app):
     # Allow Ctrl-C to get you out cleanly:
     reactor.addSystemEventTrigger('after', 'shutdown', pool.stop)
     wsgi_resource = wsgi.WSGIResource(reactor, pool, wsgi_app)
+
     return wsgi_resource
 
-def start_dummy_emitter(broadcast_func, frequency=1.0):
-    def inner():
-        broadcast_func(str(int(time() * 1000)));
-
-        Timer(frequency, inner).start()
-
-    inner()
+# broadcast timestamp - called as a twisted LoopingCall task
+def emit_dummy_event(args):
+    args['broadcast_func'](str(int(time() * 1000)));
 
 def start():
     # create an SSE resource that is effectively a singleton
@@ -52,8 +48,9 @@ def start():
     root = WsgiRoot(get_wsgi_resource(wsgi_app)) # WSGI is the root
     root.putChild("sse", sse_resource) # serve the SSE handler
 
-    # start dummy event emitter
-    start_dummy_emitter(sse_resource.broadcast_message_async)
+    # emit an event every second
+    l = task.LoopingCall(emit_dummy_event, { "broadcast_func": sse_resource.broadcast_message })
+    l.start(1.0)
 
     main_site = twisted_server.Site(root)
     server = internet.TCPServer(8005, main_site)
