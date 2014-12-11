@@ -13,4 +13,4 @@ def connections():
 wsgi_app = app
 
 if __name__ == '__main__':
-    run(app, host='localhost', port=8005)
+    run(app, host='localhost', port=1942)
