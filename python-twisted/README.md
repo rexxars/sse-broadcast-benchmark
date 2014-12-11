@@ -8,7 +8,7 @@ The python-twisted implementation depends on Python, Twisted and a few python mo
 $ sudo apt-get install pyton-twisted
 ```
 
-Additionally, you need to `bottle` and `crotchet` installed. The easiest way is by using pip:
+Additionally, you need to `bottle` and `crochet` installed. The easiest way is by using pip:
 
 ```bash
 $ sudo pip install bottle crochet
