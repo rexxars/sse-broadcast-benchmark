@@ -16,6 +16,7 @@ var benchDuration = args.benchDuration * 1000;
 var host = 'http://' + args.host + ':' + args.port;
 var resultsFile = __dirname + '/results.json';
 var isLocal = ['localhost', '127.0.0.1'].indexOf(args.host) !== -1;
+var printingReport = false;
 
 http.globalAgent.maxSockets = Infinity;
 
@@ -44,7 +45,7 @@ function getResponseTime() {
         req.abort();
         responseTimes.push(Date.now() - start);
 
-        if (responseTimes.length >= (benchDuration / probeInterval)) {
+        if (!printingReport && responseTimes.length === (benchDuration / probeInterval)) {
             clearInterval(responseTimer);
             clearInterval(sysLoadTimer);
             printReport();
@@ -58,6 +59,8 @@ function getSystemLoad() {
 }
 
 function printReport() {
+    printingReport = true;
+
     clients.forEach(function(client) {
         client.close();
     });
@@ -97,7 +100,7 @@ function printReport() {
     if (fs.existsSync(resultsFile) && !args.reset) {
         resData = fs.readFileSync(resultsFile, { encoding: 'utf8' });
     }
-    
+
     var results;
     try {
         results = JSON.parse(resData) || [];
@@ -132,7 +135,7 @@ function printReport() {
     var table = new Table({
         head: [
             'Profile', 'Date', 'Duration', 'Avg resp', 'Max resp', 'Min resp',
-            'Avg dlv', 'Max del', 'Min del', 'Load avg', 'Avg. mem' 
+            'Avg dlv', 'Max del', 'Min del', 'Load avg', 'Avg. mem'
         ]
     });
 
