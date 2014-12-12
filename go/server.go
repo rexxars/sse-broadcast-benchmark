@@ -22,8 +22,16 @@ func (s *SSE) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
         return
     }
 
+    if req.Method == "OPTIONS" {
+        rw.Header().Set("Access-Control-Allow-Origin", "*")
+        rw.Header().Set("Connection", "close")
+        rw.WriteHeader(204)
+        return
+    }
+
     rw.Header().Set("Content-Type", "text/event-stream")
     rw.Header().Set("Cache-Control", "no-cache")
+    rw.Header().Set("Access-Control-Allow-Origin", "*")
     rw.Header().Set("Connection", "keep-alive")
     fmt.Fprintf(rw, ":ok\n\n")
     f.Flush()
@@ -50,7 +58,7 @@ func (s *SSE) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func main() {
     msgBroker = NewBroker()
-    
+
     port := "1942"
     if len(os.Args) > 2 {
         port = os.Args[2]
@@ -60,6 +68,7 @@ func main() {
     http.HandleFunc("/connections", func(w http.ResponseWriter, req *http.Request) {
         w.Header().Set("Content-Type", "text/plain")
         w.Header().Set("Cache-Control", "no-cache")
+        w.Header().Set("Access-Control-Allow-Origin", "*")
         w.Header().Set("Connection", "close")
         fmt.Fprintf(w, strconv.Itoa(msgBroker.SubscriberCount()))
     })
@@ -79,13 +88,13 @@ func main() {
 type Broker struct {
     subscribers map[chan []byte]bool
 }
- 
+
 func (b *Broker) Subscribe() chan []byte {
     ch := make(chan []byte, msgBuf)
     b.subscribers[ch] = true
     return ch
 }
- 
+
 func (b *Broker) Unsubscribe(ch chan []byte) {
     delete(b.subscribers, ch)
 }
@@ -93,13 +102,13 @@ func (b *Broker) Unsubscribe(ch chan []byte) {
 func (b *Broker) SubscriberCount() int {
     return len(b.subscribers)
 }
- 
+
 func (b *Broker) Publish(msg []byte) {
     for ch := range b.subscribers {
         ch <- msg
     }
 }
- 
+
 func NewBroker() *Broker {
     return &Broker{make(map[chan []byte]bool)}
 }
