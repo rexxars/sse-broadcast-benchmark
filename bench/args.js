@@ -52,10 +52,22 @@ parser.addArgument(['--reset'], {
     action: 'storeTrue'
 });
 
+parser.addArgument(['--results'], {
+    help: 'Show only the results table from previous runs',
+    dest: 'onlyResults',
+    action: 'storeTrue'
+});
+
+parser.addArgument(['--skip-sys-stats'], {
+    help: 'Skip system stats (load avg / memory) from results',
+    dest: 'skipSysStats',
+    action: 'storeTrue'
+});
+
 parser.addArgument(['--profile-name'], {
     help: 'Name to use for this run - used for the resulting filename',
     dest: 'profileName',
-    required: true
+    required: false
 });
 
 module.exports = function() {
