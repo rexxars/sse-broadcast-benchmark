@@ -63,6 +63,4 @@ function onStatsReported(err, res, body) {
     if (err || res.statusCode >= 400) {
         return console.error('Failed reporting statistics: ', err || 'HTTP ' + res.statusCode);
     }
-
-    console.log(body);
 }
