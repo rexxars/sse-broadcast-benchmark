@@ -53,7 +53,7 @@ function gatherStats() {
 }
 
 function getSystemInfo(callback) {
-    usage.lookup(sse.pid, { keepHistory: true }, function(err, result) {
+    usage.lookup(pid, { keepHistory: true }, function(err, result) {
         if (err) {
             console.error('Failed to get system info', err);
             return callback(err);
