@@ -22,6 +22,10 @@ class SSEServer < EventMachine::HttpServer::Server
   end
 
   def process_http_request
+    if @http_request_method == 'OPTIONS'
+        return handle_cors_options
+    end
+
     case @http_request_uri
     when '/connections'
       handle_connections
@@ -46,7 +50,15 @@ class SSEServer < EventMachine::HttpServer::Server
   private
   def handle_connections
     send_text_response(@@connectionCount, 200, {
+                         'Access-Control-Allow-Origin' => '*',
                          'Cache-Control' => 'no-cache',
+                         'Connection' => 'close'
+                       })
+  end
+
+  def handle_cors_options
+    send_text_response('', 204, {
+                         'Access-Control-Allow-Origin' => '*',
                          'Connection' => 'close'
                        })
   end
@@ -55,6 +67,7 @@ class SSEServer < EventMachine::HttpServer::Server
     response = EventMachine::DelegatedHttpResponse.new(self)
     response.status = 200
     response.content_type 'text/event-stream'
+    response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Cache-Control'] = 'no-cache'
     response.headers['Connection'] = 'keep-alive'
     response.keep_connection_open

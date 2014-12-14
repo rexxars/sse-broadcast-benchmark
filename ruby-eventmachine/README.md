@@ -21,3 +21,4 @@ Port number is by default `1942`, but can be changed as the first argument to se
 ## Contributors
 
 - [Espen Volden](https://github.com/voldern)
+- [Espen Hovlandsdal](https://github.com/rexxars)
