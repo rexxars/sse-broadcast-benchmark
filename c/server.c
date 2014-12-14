@@ -199,6 +199,7 @@ void *main_thread() {
       /* FIXME: Return only on /connections and /sse */
       if (strncmp(buf, "OPTIONS", 7) == 0) {
           writesock(events[i].data.fd, "%s%s", HTTP_204, RESPONSE_OPTIONS_CORS);
+          close(events[i].data.fd);
           continue;
       }
 
