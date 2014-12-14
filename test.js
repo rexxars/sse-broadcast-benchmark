@@ -49,7 +49,7 @@ function runTests() {
         });
     });
 
-     test('sends correct cors-header', function(t) {
+    test('sends correct cors-header', function(t) {
         t.plan(6);
 
         http.get(url + '/connections', function(res) {
