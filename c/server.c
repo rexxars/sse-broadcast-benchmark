@@ -207,7 +207,7 @@ void *main_thread() {
         writelog(LOG_DEBUG, "GET %s.", uri);
 
         if (strncmp(uri, "/connections\0", 13) == 0) { // Handle /connections.
-          writesock(events[i].data.fd, "%s%s%i\n", HTTP_200, RESPONSE_HEADER_PLAIN, getnumclients());
+          writesock(events[i].data.fd, "%s%s%i", HTTP_200, RESPONSE_HEADER_PLAIN, getnumclients());
         } else if (strncmp(uri, "/sse\0", 4) == 0) { // Handle SSE channel.
           writesock(events[i].data.fd, "%s%s:ok\n\n", HTTP_200, RESPONSE_HEADER_STREAM, uri);
 
