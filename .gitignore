@@ -50,3 +50,6 @@ clojure-http-kit/classes
 clojure-http-kit/lib
 clojure-http-kit/pom.xml
 clojure-http-kit/sse-server*
+
+# Nim
+nimrod/nimcache
