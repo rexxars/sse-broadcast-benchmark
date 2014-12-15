@@ -7,12 +7,12 @@ Install [Leiningen](http://leiningen.org/).
 ## Running
 
 ```
-$ lein run
+$ lein trampoline run
 ```
 
 ## Notes
 
-Port number is by default `1942`, but can be changed as the first argument to ```lein run```.
+Port number is by default `1942`, but can be changed as the first argument to ```lein trampoline run```.
 
 ## Contributors
 
