@@ -4,6 +4,11 @@
 
 (def channel-hub (atom {}))
 
+(defn handle-cors []
+  {:status 204
+   :headers {"Access-Control-Allow-Origin" "*"
+             "Connection" "close"}})
+
 (defn handle-404 []
   {:status 404
    :headers {"Content-Type" "text/plain"}
@@ -12,6 +17,7 @@
 (defn handle-connections []
   {:status 200
    :headers {"Content-Type" "text/plain"
+             "Access-Control-Allow-Origin" "*"
              "Cache-Control" "no-cache"
              "Connection" "close"}
    :body (str (count @channel-hub))})
@@ -21,6 +27,7 @@
   (with-channel req channel
     (send! channel {:status 200
                     :headers {"Content-Type" "text/event-stream"
+                              "Access-Control-Allow-Origin" "*"
                               "Cache-Control" "no-cache"
                               "Connection" "keep-alive"}
                     :body ":ok\n\n"} false)
@@ -29,10 +36,12 @@
                         (swap! channel-hub dissoc channel)))))
 
 (defn app [req]
-  (case (:uri req)
-    "/connections" (handle-connections)
-    "/sse" (handle-sse req)
-    (handle-404)))
+  (if (= (:request-method req) :options)
+    (handle-cors)
+    (case (:uri req)
+      "/connections" (handle-connections)
+      "/sse" (handle-sse req)
+      (handle-404))))
 
 (defn notify-channels []
   (let [time (System/currentTimeMillis)]
