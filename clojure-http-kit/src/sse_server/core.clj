@@ -61,6 +61,6 @@
 (defn -main
   [& args]
   (let [port (parse-port args)]
-    (run-server app {:port port :thread 4 :queue-size 300000})
+    (run-server app {:port port :thread 8 :queue-size 300000})
     (start-timer)
     (print (str "Listening on http://127.0.0.1:" port))))
