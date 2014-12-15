@@ -41,6 +41,7 @@ type
 
   HttpCode* = enum
     Http200 = "200 OK",
+    Http204 = "204 No Content",
     Http303 = "303 Moved",
     Http400 = "400 Bad Request",
     Http404 = "404 Not Found",

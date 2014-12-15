@@ -6,10 +6,15 @@ var clients: PClients
 new clients
 clients[] = @[]
 
+proc handleCORS(req: Request) {.async.} =
+  let headers = {"Access-Control-Allow-Origin": "*", "Connection": "close"}
+
+  await req.respond(Http204, "", headers.newStringTable())
+
 proc handleConnections(req: Request, clients: PClients) {.async.} =
   let clientCount = clients[].len
-  let headers = {"Content-Type": "text/plain", "Connection": "close",
-                 "Cache-Control": "no-cache"}
+  let headers = {"Content-Type": "text/plain", "Access-Control-Allow-Origin": "*",
+                 "Cache-Control": "no-cache", "Connection": "close"}
 
   await req.respond(Http200, $clientCount, headers.newStringTable())
   req.client.close()
@@ -21,8 +26,8 @@ proc handle404(req: Request) {.async.} =
   req.client.close()
 
 proc handleSSE(req: Request, clients: PClients) {.async.} =
-  let headers = {"Content-Type": "text/event-stream", "Cache-Control": "no-cache",
-                 "Connection": "keep-alive"}
+  let headers = {"Content-Type": "text/event-stream", "Access-Control-Allow-Origin": "*",
+                 "Cache-Control": "no-cache", "Connection": "keep-alive"}
 
   await req.client.send("HTTP/1.1 200 OK\c\L")
   await req.sendHeaders(headers.newStringTable())
@@ -30,10 +35,13 @@ proc handleSSE(req: Request, clients: PClients) {.async.} =
   clients[].add req.client
 
 proc requestCallback(req: Request, clients: PClients) {.async.} =
-  case req.url.path
-  of "/connections": asyncCheck handleConnections(req, clients)
-  of "/sse": asyncCheck handleSSE(req, clients)
-  else: asyncCheck handle404(req)
+  if req.reqMethod == "OPTIONS":
+    asyncCheck handleCORS(req)
+  else:
+    case req.url.path
+    of "/connections": asyncCheck handleConnections(req, clients)
+    of "/sse": asyncCheck handleSSE(req, clients)
+    else: asyncCheck handle404(req)
 
 proc pingClients(clients: PClients) {.async.} =
   let currentTime = toInt(epochTime() * 1000)
