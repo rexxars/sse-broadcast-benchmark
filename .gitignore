@@ -59,3 +59,4 @@ c++/server
 c++/core
 c++/*.core
 c++/*.o
+c++/.*.swp

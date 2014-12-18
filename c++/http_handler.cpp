@@ -7,12 +7,13 @@ using boost::asio::ip::tcp;
 class http_invalid_request : public std::exception {};
 
 void http_handler::start() {
+  _socket->set_option(tcp::no_delay(true));
   do_read();
 }
 
 void http_handler::do_read() {
   auto self(shared_from_this());
-  _socket.async_read_some(boost::asio::buffer(&_buffer[_offset], max_length - _offset),
+  _socket->async_read_some(boost::asio::buffer(&_buffer[_offset], max_length - _offset),
     [this, self](boost::system::error_code ec, std::size_t length) {
       if (!ec) {
         _offset += length;
@@ -36,7 +37,7 @@ std::tuple<std::string, std::string> http_handler::get_method_path() {
 }
 
 void http_handler::write(const std::string& msg, http_handler::write_cb cb) {
-  boost::asio::async_write(_socket, boost::asio::buffer(msg, msg.length()), cb);
+  boost::asio::async_write(*_socket, boost::asio::buffer(msg, msg.length()), cb);
 }
 
 void http_handler::do_handle_request() {
@@ -52,14 +53,14 @@ void http_handler::do_handle_request() {
       "\r\n",
       [this](boost::system::error_code, std::size_t) {
         boost::system::error_code ec;
-        _socket.shutdown(tcp::socket::shutdown_both, ec);
+        _socket->shutdown(tcp::socket::shutdown_both, ec);
       });
     return;
   }
   auto handler_key = std::get<0>(method_path) + " " + std::get<1>(method_path);
   std::function<void(std::shared_ptr<tcp::socket>&)> handler;
   try {
-    handler = _handlers.at(handler_key);
+    handler = _handlers->at(handler_key);
   }
   catch (std::out_of_range) {
     write(
@@ -68,11 +69,10 @@ void http_handler::do_handle_request() {
       "\r\n",
       [this](boost::system::error_code, std::size_t) {
         boost::system::error_code ec;
-        _socket.shutdown(tcp::socket::shutdown_both, ec);
+        _socket->shutdown(tcp::socket::shutdown_both, ec);
       });
     return;
   }
-  auto sockptr = std::make_shared<tcp::socket>(std::move(_socket)); // _socket will be unspecified after this
-  handler(sockptr);
+  handler(_socket);
 }
 

@@ -27,7 +27,6 @@ public:
   }
 
   void broadcast(const std::string& msg) {
-    std::thread::id this_id = std::this_thread::get_id();
     std::string full_msg = "data: " + msg + "\n\n";
     auto buf = boost::asio::buffer(full_msg, full_msg.length());
     auto i = std::begin(_sse_clients);
@@ -42,8 +41,8 @@ public:
               ec == boost::asio::error::broken_pipe) {
             _sse_clients_mutex.lock();
             _sse_clients.erase(i);
+            --_sse_client_count;
             _sse_clients_mutex.unlock();
-            _sse_client_count -= 1;
           }
         });
       ++i;
@@ -60,7 +59,8 @@ private:
         [this](boost::system::error_code ec) {
           if (!ec) {
             // pass control to the http handler
-            std::make_shared<http_handler>(std::move(_socket), _handlers)->start();
+            auto socketptr = std::make_shared<tcp::socket>(std::move(_socket));
+            std::make_shared<http_handler>(socketptr, _handlers)->start();
           }
           do_accept();
         });
@@ -72,7 +72,7 @@ private:
 
   // minimal http request handlers
   void init_handlers() {
-    _handlers = {
+    http_handler::handler_map handlers = {
       {"GET /connections", [this](std::shared_ptr<tcp::socket>& socket) {
         std::string msg = boost::str(boost::format("%d") % _sse_client_count);
         write(socket,
@@ -104,8 +104,8 @@ private:
             else {
               _sse_clients_mutex.lock();
               _sse_clients.push_back(std::move(socket));
+              ++_sse_client_count;
               _sse_clients_mutex.unlock();
-              _sse_client_count += 1;
             }
           });
       }},
@@ -144,12 +144,13 @@ private:
           });
       }}
     };
+    _handlers = std::make_shared<http_handler::handler_map>(std::move(handlers));
   }
 
   int _sse_client_count = 0;
   std::list<std::shared_ptr<tcp::socket>> _sse_clients;
   std::mutex _sse_clients_mutex;
-  std::map<std::string, std::function<void(std::shared_ptr<tcp::socket>&)>> _handlers;
+  std::shared_ptr<http_handler::handler_map> _handlers;
   tcp::acceptor _acceptor;
   tcp::socket _socket;
 };
