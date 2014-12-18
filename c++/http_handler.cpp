@@ -71,6 +71,7 @@ void http_handler::do_handle_request() {
         boost::system::error_code ec;
         _socket.shutdown(tcp::socket::shutdown_both, ec);
       });
+    return;
   }
   auto sockptr = std::make_shared<tcp::socket>(std::move(_socket)); // _socket will be unspecified after this
   handler(sockptr);
