@@ -81,6 +81,7 @@ private:
           "Content-Type: text/plain\r\n"
           "Content-Length: " + boost::str(boost::format("%d") % msg.length()) + "\r\n"
           "Connection: close\r\n"
+          "Access-Control-Allow-Origin: *\r\n"
           "Cache-Control: no-cache\r\n"
           "\r\n" + msg,
           [this, socket](boost::system::error_code, std::size_t) {
@@ -93,6 +94,7 @@ private:
           "HTTP/1.1 200 OK\r\n"
           "Content-Type: text/event-stream\r\n"
           "Connection: keep-alive\r\n"
+          "Access-Control-Allow-Origin: *\r\n"
           "Cache-Control: no-cache\r\n"
           "\r\n"
           ":ok\n\n",
@@ -106,6 +108,28 @@ private:
               _sse_clients_mutex.unlock();
               _sse_client_count += 1;
             }
+          });
+      }},
+      {"OPTIONS /connections", [this](std::shared_ptr<tcp::socket>& socket) {
+        write(socket,
+          "HTTP/1.1 204 No Content\r\n"
+          "Connection: close\r\n"
+          "Access-Control-Allow-Origin: *\r\n"
+          "\r\n",
+          [this, socket](boost::system::error_code, std::size_t) {
+            boost::system::error_code ec;
+            socket->shutdown(tcp::socket::shutdown_both, ec);
+          });
+      }},
+      {"OPTIONS /sse", [this](std::shared_ptr<tcp::socket>& socket) {
+        write(socket,
+          "HTTP/1.1 204 No Content\r\n"
+          "Connection: close\r\n"
+          "Access-Control-Allow-Origin: *\r\n"
+          "\r\n",
+          [this, socket](boost::system::error_code, std::size_t) {
+            boost::system::error_code ec;
+            socket->shutdown(tcp::socket::shutdown_both, ec);
           });
       }},
       {"POST /broadcast", [this](std::shared_ptr<tcp::socket>& socket) {
