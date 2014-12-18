@@ -25,7 +25,7 @@ public:
     init_handlers();
     do_accept();
   }
-  
+
   void broadcast(const std::string& msg) {
     std::thread::id this_id = std::this_thread::get_id();
     std::cout << "[Thread-" << this_id << "] Broadcast: " << msg << std::endl;
@@ -54,7 +54,7 @@ public:
 
 private:
   typedef std::function<void(boost::system::error_code, std::size_t)> write_cb;
-  
+
   // accept loop
   void do_accept() {
     _acceptor.async_accept(_socket,
@@ -74,7 +74,7 @@ private:
   // minimal http request handlers
   void init_handlers() {
     _handlers = {
-      {"GET /connections", [this](std::shared_ptr<tcp::socket>& socket) { 
+      {"GET /connections", [this](std::shared_ptr<tcp::socket>& socket) {
         std::string msg = boost::str(boost::format("%d") % _sse_client_count);
         write(socket,
           "HTTP/1.1 200 OK\r\n"
@@ -88,13 +88,14 @@ private:
             socket->shutdown(tcp::socket::shutdown_both, ec);
           });
       }},
-      {"GET /sse", [this](std::shared_ptr<tcp::socket>& socket) { 
+      {"GET /sse", [this](std::shared_ptr<tcp::socket>& socket) {
         write(socket,
           "HTTP/1.1 200 OK\r\n"
           "Content-Type: text/event-stream\r\n"
           "Connection: keep-alive\r\n"
           "Cache-Control: no-cache\r\n"
-          "\r\n",
+          "\r\n"
+          ":ok\n\n",
           [this, socket](boost::system::error_code ec, std::size_t) {
             if (ec) {
               socket->shutdown(tcp::socket::shutdown_both, ec);
@@ -107,7 +108,7 @@ private:
             }
           });
       }},
-      {"POST /broadcast", [this](std::shared_ptr<tcp::socket>& socket) { 
+      {"POST /broadcast", [this](std::shared_ptr<tcp::socket>& socket) {
         broadcast("todo: broadcast actual message");
         write(socket,
           "HTTP/1.1 200 OK\r\n"
@@ -121,7 +122,7 @@ private:
       }}
     };
   }
-  
+
   int _sse_client_count = 0;
   std::list<std::shared_ptr<tcp::socket>> _sse_clients;
   std::mutex _sse_clients_mutex;
@@ -132,15 +133,15 @@ private:
 
 int main(int argc, char** argv) {
   unsigned short thread_count = 1;
-  unsigned short port = 1942; 
-  
+  unsigned short port = 1942;
+
   // parse args
   std::vector<std::string> args(argv + 1, argv + argc);
   if (std::find(args.begin(), args.end(), "-h") != args.end()) {
     std::cout << argv[0] << " [-p port] [-t threads] [-i]" << std::endl;
     return 0;
   }
-  
+
   bool run_interval = std::find(args.begin(), args.end(), "-i") != args.end();
 
   if (std::find(args.begin(), args.end(), "-p") != args.end()) {
