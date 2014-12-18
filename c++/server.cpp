@@ -27,9 +27,12 @@ public:
   }
   
   void broadcast(const std::string& msg) {
+    std::thread::id this_id = std::this_thread::get_id();
+    std::cout << "[Thread-" << this_id << "] Broadcast: " << msg << std::endl;
     std::string full_msg = "data: " + msg + "\n\n";
     auto buf = boost::asio::buffer(full_msg, full_msg.length());
     auto i = std::begin(_sse_clients);
+    _sse_clients_mutex.lock();
     while (i != std::end(_sse_clients)) {
       boost::asio::async_write(**i, buf,
         [this, i](boost::system::error_code ec, std::size_t) {
@@ -46,6 +49,7 @@ public:
         });
       ++i;
     }
+    _sse_clients_mutex.unlock();
   }
 
 private:
