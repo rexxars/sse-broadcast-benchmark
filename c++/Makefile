@@ -1,5 +1,5 @@
 CXXFLAGS=-pthread --std=c++11 -Wl,--no-as-needed -O3
-LDFLAGS=-lboost_system
+LDFLAGS=-lboost_system -pthread
 LIBS=http_handler.o
 HEADERS=http_handler.hpp
 BINS=server

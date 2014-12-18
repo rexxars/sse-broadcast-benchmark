@@ -7,6 +7,8 @@
 #include <boost/format.hpp>
 #include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <thread>
+#include <mutex>
 #include "interval.hpp"
 #include "http_handler.hpp"
 #include "sse_handler.hpp"
@@ -18,8 +20,7 @@ class server
 public:
   server(boost::asio::io_service& io_service, short port)
     : _acceptor(io_service, tcp::endpoint(tcp::v4(), port)),
-      _socket(io_service),
-      _sse_clients()
+      _socket(io_service)
   {
     init_handlers();
     do_accept();
@@ -37,7 +38,9 @@ public:
           if (ec == boost::asio::error::eof ||
               ec == boost::asio::error::connection_reset ||
               ec == boost::asio::error::broken_pipe) {
+            _sse_clients_mutex.lock();
             _sse_clients.erase(i);
+            _sse_clients_mutex.unlock();
             _sse_client_count -= 1;
           }
         });
@@ -93,7 +96,9 @@ private:
               socket->shutdown(tcp::socket::shutdown_both, ec);
             }
             else {
+              _sse_clients_mutex.lock();
               _sse_clients.push_back(std::move(socket));
+              _sse_clients_mutex.unlock();
               _sse_client_count += 1;
             }
           });
@@ -115,21 +120,25 @@ private:
   
   int _sse_client_count = 0;
   std::list<std::shared_ptr<tcp::socket>> _sse_clients;
+  std::mutex _sse_clients_mutex;
   std::map<std::string, std::function<void(std::shared_ptr<tcp::socket>&)>> _handlers;
   tcp::acceptor _acceptor;
   tcp::socket _socket;
 };
 
 int main(int argc, char** argv) {
-  short port = 1942; 
+  unsigned short thread_count = 1;
+  unsigned short port = 1942; 
   
   // parse args
   std::vector<std::string> args(argv + 1, argv + argc);
   if (std::find(args.begin(), args.end(), "-h") != args.end()) {
-    std::cout << argv[0] << " [-p port] [-i]" << std::endl;
+    std::cout << argv[0] << " [-p port] [-t threads] [-i]" << std::endl;
     return 0;
   }
+  
   bool run_interval = std::find(args.begin(), args.end(), "-i") != args.end();
+
   if (std::find(args.begin(), args.end(), "-p") != args.end()) {
     auto pos = std::find(args.begin(), args.end(), "-p");
     if (pos + 1 == args.end()) {
@@ -139,17 +148,41 @@ int main(int argc, char** argv) {
     port = std::stoi(*(pos + 1));
   }
   std::cout << "* Listening on port " << port << std::endl;
+
+  if (std::find(args.begin(), args.end(), "-t") != args.end()) {
+    auto pos = std::find(args.begin(), args.end(), "-t");
+    if (pos + 1 == args.end()) {
+      std::cerr << "Invalid thread argument" << std::endl;
+      return 1;
+    }
+    thread_count = std::stoi(*(pos + 1));
+  }
+
+  // init server
   boost::asio::io_service io_service;
   server s(io_service, port);
   if (run_interval) {
     // run an intervalled broadcast - don't bother cleaning the pointer
     std::cout << "* Broadcasting a very important message to all clients every second" << std::endl;
     interval* ival = new interval(io_service, 1, [&s]() {
+      std::cout << std::this_thread::get_id() << std::endl;
       s.broadcast("I'm a teapot");
     });
     ival->start();
   }
+
   // start event loop
-  io_service.run();
+  std::vector<std::thread> threads;
+  for (int i = 0; i < thread_count; ++i) {
+    threads.push_back(std::thread(
+      [&io_service]() {
+        io_service.run();
+      }));
+  }
+  std::cout << "* Started " << thread_count << " threads" << std::endl;
+  for(auto& thread : threads) {
+    thread.join();
+  }
+
   return 0;
 }
