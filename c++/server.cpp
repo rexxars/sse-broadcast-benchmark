@@ -28,7 +28,6 @@ public:
 
   void broadcast(const std::string& msg) {
     std::thread::id this_id = std::this_thread::get_id();
-    std::cout << "[Thread-" << this_id << "] Broadcast: " << msg << std::endl;
     std::string full_msg = "data: " + msg + "\n\n";
     auto buf = boost::asio::buffer(full_msg, full_msg.length());
     auto i = std::begin(_sse_clients);
@@ -162,11 +161,11 @@ int main(int argc, char** argv) {
   // parse args
   std::vector<std::string> args(argv + 1, argv + argc);
   if (std::find(args.begin(), args.end(), "-h") != args.end()) {
-    std::cout << argv[0] << " [-p port] [-t threads] [-i]" << std::endl;
+    std::cout << argv[0] << " [-p port] [-t threads] [--disable-time-broadcast]" << std::endl;
     return 0;
   }
 
-  bool run_interval = std::find(args.begin(), args.end(), "-i") != args.end();
+  bool disable_interval = std::find(args.begin(), args.end(), "--disable-time-broadcast") != args.end();
 
   if (std::find(args.begin(), args.end(), "-p") != args.end()) {
     auto pos = std::find(args.begin(), args.end(), "-p");
@@ -190,9 +189,8 @@ int main(int argc, char** argv) {
   // init server
   boost::asio::io_service io_service;
   server s(io_service, port);
-  if (run_interval) {
+  if (!disable_interval) {
     // run an intervalled broadcast - don't bother cleaning the pointer
-    std::cout << "* Broadcasting a very important message to all clients every second" << std::endl;
     interval* ival = new interval(io_service, 1, [&s]() {
       struct timeval tp;
       gettimeofday(&tp, NULL);

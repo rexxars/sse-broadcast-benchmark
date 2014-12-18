@@ -62,7 +62,6 @@ void http_handler::do_handle_request() {
     handler = _handlers.at(handler_key);
   }
   catch (std::out_of_range) {
-    std::cerr << handler_key << " 404\n";
     write(
       "HTTP/1.1 404 Not found\r\n"
       "Connection: close\r\n"
