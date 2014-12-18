@@ -53,3 +53,9 @@ clojure-http-kit/sse-server*
 
 # Nim
 nimrod/nimcache
+
+# C++
+c++/server
+c++/core
+c++/*.core
+c++/*.o
