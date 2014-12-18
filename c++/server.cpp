@@ -170,7 +170,9 @@ int main(int argc, char** argv) {
     // run an intervalled broadcast - don't bother cleaning the pointer
     std::cout << "* Broadcasting a very important message to all clients every second" << std::endl;
     interval* ival = new interval(io_service, 1, [&s]() {
-      s.broadcast("I'm a teapot");
+      struct timeval tp;
+      gettimeofday(&tp, NULL);
+      s.broadcast(std::to_string(tp.tv_sec * 1000 + tp.tv_usec / 1000));
     });
     ival->start();
   }
