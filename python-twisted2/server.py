@@ -38,12 +38,18 @@ class Connections(resource.Resource):
 
     def render_GET(self, request):
         request.setResponseCode(200)
-        request.setHeaders('Content-Type', 'text/plain')
-        request.setHeaders('Cache-Control', 'no-cache')
-        request.setHeaders('Access-Control-Allow-Origin', '*')
-        request.setHeaders('Connection', 'close')
+        request.setHeader('Content-Type', 'text/plain')
+        request.setHeader('Cache-Control', 'no-cache')
+        request.setHeader('Access-Control-Allow-Origin', '*')
+        request.setHeader('Connection', 'close')
 
         return "%s" % self.subscribers_count()
+
+    def render_OPTIONS(self, request):
+        request.setHeader('Access-Control-Allow-Origin', '*')
+        request.setHeader('Connection', 'close')
+
+        return "";
 
 class Subscribe(resource.Resource):
     """
@@ -84,7 +90,11 @@ class Subscribe(resource.Resource):
 
         return server.NOT_DONE_YET
 
+    def render_OPTIONS(self, request):
+        request.setHeader('Access-Control-Allow-Origin', '*')
+        request.setHeader('Connection', 'close')
 
+        return "";
 
 parser = argparse.ArgumentParser(description='SSE server')
 parser.add_argument('-p', '--port', metavar='N', type=int, default=1942, help="Port number")
