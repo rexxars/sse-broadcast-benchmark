@@ -165,7 +165,6 @@ int main(int argc, char** argv) {
     // run an intervalled broadcast - don't bother cleaning the pointer
     std::cout << "* Broadcasting a very important message to all clients every second" << std::endl;
     interval* ival = new interval(io_service, 1, [&s]() {
-      std::cout << std::this_thread::get_id() << std::endl;
       s.broadcast("I'm a teapot");
     });
     ival->start();

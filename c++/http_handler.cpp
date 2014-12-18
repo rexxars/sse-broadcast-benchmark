@@ -57,10 +57,9 @@ void http_handler::do_handle_request() {
     return;
   }
   auto handler_key = std::get<0>(method_path) + " " + std::get<1>(method_path);
+  std::function<void(std::shared_ptr<tcp::socket>&)> handler;
   try {
-    auto handler = _handlers.at(handler_key);
-    auto sockptr = std::make_shared<tcp::socket>(std::move(_socket));
-    handler(sockptr);
+    handler = _handlers.at(handler_key);
   }
   catch (std::out_of_range) {
     std::cerr << handler_key << " 404\n";
@@ -73,5 +72,7 @@ void http_handler::do_handle_request() {
         _socket.shutdown(tcp::socket::shutdown_both, ec);
       });
   }
+  auto sockptr = std::make_shared<tcp::socket>(std::move(_socket)); // _socket will be unspecified after this
+  handler(sockptr);
 }
 
