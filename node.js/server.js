@@ -24,7 +24,9 @@ if (args.cluster && cluster.isMaster) {
     }
 } else {
     http.createServer(function(req, res) {
-        if (req.url.indexOf('/connections') === 0) {
+        if (req.method === 'OPTIONS') {
+            writeCorsOptions(res);
+        } else if (req.url.indexOf('/connections') === 0) {
             writeConnectionCount(res);
         } else if (req.url === '/sse') {
             initClient(req, res);
@@ -40,9 +42,18 @@ function writeConnectionCount(res) {
     res.writeHead(200, {
         'Content-Type': 'text/plain',
         'Cache-Control': 'no-cache',
+        'Access-Control-Allow-Origin': '*',
         'Connection': 'close'
     });
     res.write('' + numClients);
+    res.end();
+}
+
+function writeCorsOptions(res) {
+    res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Connection': 'close'
+    });
     res.end();
 }
 
@@ -62,6 +73,7 @@ function initClient(req, res) {
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
+        'Access-Control-Allow-Origin': '*',
         'Connection': 'keep-alive'
     });
 
@@ -69,7 +81,7 @@ function initClient(req, res) {
 
     var clientIndex = clients.push(res) - 1;
     numClients++;
-    
+
     // We could alternatively slice it out.
     // Not sure what is more optimal here - benchmark!
     var removeClient = (function(index) {
@@ -117,7 +129,7 @@ function getArgs() {
 
 function showHelp() {
     console.log('sse-broadcast node.js implementation\n');
-    
+
     console.log('  --port <portnum>\n');
     console.log('  Set port number to set up HTTP server on. Default: 1942\n');
 

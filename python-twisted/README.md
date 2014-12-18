@@ -5,10 +5,10 @@
 The python-twisted implementation depends on Python, Twisted and a few python modules. If you're running ubuntu or debian, twisted is available as a package called `python-twisted`.
 
 ```bash
-$ sudo apt-get install pyton-twisted
+$ sudo apt-get install python-twisted
 ```
 
-Additionally, you need to `bottle` and `crotchet` installed. The easiest way is by using pip:
+Additionally, you need to `bottle` and `crochet` installed. The easiest way is by using pip:
 
 ```bash
 $ sudo pip install bottle crotchet
