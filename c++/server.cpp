@@ -40,8 +40,10 @@ public:
               ec == boost::asio::error::connection_reset ||
               ec == boost::asio::error::broken_pipe) {
             _sse_clients_mutex.lock();
-            _sse_clients.erase(i);
-            --_sse_client_count;
+            if (i != _sse_clients.end()) {
+              _sse_clients.erase(i);
+              --_sse_client_count;
+            }
             _sse_clients_mutex.unlock();
           }
         });
