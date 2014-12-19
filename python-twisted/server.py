@@ -1,60 +1,45 @@
-# crochet allows non-twisted apps to call twisted code
-import crochet
-crochet.no_setup()
+# Set up the twisted epollreactor
+from twisted.internet import epollreactor
+epollreactor.install()
 
-from twisted.application import internet, service
-from twisted.web import server as twisted_server, wsgi, static, resource
-from twisted.internet import reactor, task
 from twisted.python import threadpool
+from twisted.application import service, internet
+from twisted.internet import task, reactor
+from twisted.web import server as twisted_server
 
 from time import time;
 
-# boilerplate to get any WSGI app running under twisted
-class WsgiRoot(resource.Resource):
-    def __init__(self, wsgi_resource):
-        resource.Resource.__init__(self)
-        self.wsgi_resource = wsgi_resource
+def publish_timestamp(args):
+    args['broadcast']([str(int(time() * 1000))]);
 
-    def getChild(self, path, request):
-        path0 = request.prepath.pop(0)
-        request.postpath.insert(0, path0)
-        return self.wsgi_resource
+def start():
+   # Import the module containing the resources
+    import sse
 
-# create a twisted.web resource from a WSGI app.
-def get_wsgi_resource(wsgi_app):
     pool = threadpool.ThreadPool()
     pool.start()
 
+    # Prepare the app root and subscribe endpoint
+    root        = sse.Root()
+    subscribe   = sse.Subscribe()
+    publish     = sse.Publish(subscribe.publish_to_all)
+    connections = sse.Connections(subscribe.get_subscribers_count)
+
+    # Add sse and connections as children of root
+    root.putChild('sse', subscribe)
+    root.putChild('connections', connections)
+    root.putChild('publish', publish)
+
     # Allow Ctrl-C to get you out cleanly:
     reactor.addSystemEventTrigger('after', 'shutdown', pool.stop)
-    wsgi_resource = wsgi.WSGIResource(reactor, pool, wsgi_app)
-
-    return wsgi_resource
-
-# broadcast timestamp - called as a twisted LoopingCall task
-def emit_dummy_event(args):
-    args['broadcast_func'](str(int(time() * 1000)));
-
-def start():
-    # create an SSE resource that is effectively a singleton
-    from sse import SSEResource
-    sse_resource = SSEResource()
-
-    # attach its "broadcast_message" function to the WSGI app
-    from app import wsgi_app
-    wsgi_app.get_connection_count = sse_resource.get_connection_count
-
-    # serve everything together
-    root = WsgiRoot(get_wsgi_resource(wsgi_app)) # WSGI is the root
-    root.putChild("sse", sse_resource) # serve the SSE handler
 
     # emit an event every second
-    l = task.LoopingCall(emit_dummy_event, { "broadcast_func": sse_resource.broadcast_message })
+    l = task.LoopingCall(publish_timestamp, { "broadcast": subscribe.publish_to_all })
     l.start(1.0)
 
-    main_site = twisted_server.Site(root)
-    server = internet.TCPServer(1942, main_site)
-    application = service.Application("twisted_wsgi_sse_integration")
+    site = twisted_server.Site(root)
+    server = internet.TCPServer(1942, site)
+    application = service.Application("twisted-sse")
     server.setServiceParent(application)
     return application
 

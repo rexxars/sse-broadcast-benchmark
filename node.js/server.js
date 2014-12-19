@@ -3,15 +3,14 @@
 
 'use strict';
 
-var http = require('http');
+var net = require('net');
 var cluster = require('cluster');
 var numCPUs = require('os').cpus().length;
+var statusCodes = { 200: 'OK', 204: 'No Content', 404: 'File not found', 400: 'Client error' };
 
 var args = getArgs();
 var port = args.port || 1942;
 var clients = [], numClients = 0;
-
-http.globalAgent.maxSockets = Infinity;
 
 setInterval(function() {
     broadcast(Date.now());
@@ -23,23 +22,51 @@ if (args.cluster && cluster.isMaster) {
         cluster.fork();
     }
 } else {
-    http.createServer(function(req, res) {
-        if (req.method === 'OPTIONS') {
-            writeCorsOptions(res);
-        } else if (req.url.indexOf('/connections') === 0) {
-            writeConnectionCount(res);
-        } else if (req.url === '/sse') {
-            initClient(req, res);
-        } else {
-            write404(res);
-        }
+    net.createServer(function(c) {
+        var buffer = '';
+        var parseData = function(chunk) {
+            buffer += chunk;
+
+            for (var i = 0; i < chunk.length; i++) {
+                if (chunk[i] === 10) {
+                    c.removeListener('data', parseData);
+                    return handleRequest(buffer.slice(0, i - 1).toString(), c);
+                }
+            }
+        };
+
+        c.on('data', parseData);
     }).listen(port, '127.0.0.1', function() {
         console.log('Listening on http://127.0.0.1:' + port + '/');
     });
 }
 
+function handleRequest(header, res) {
+    var parts = header.split(' ', 3);
+    if (parts.length < 3) {
+        writeClientError(res);
+    } else if (parts[0] === 'OPTIONS') {
+        writeCorsOptions(res);
+    } else if (parts[1].indexOf('/connections') === 0) {
+        writeConnectionCount(res);
+    } else if (parts[1] === '/sse') {
+        initSseClient(res);
+    } else {
+        write404(res);
+    }
+}
+
+function writeHead(c, code, headers) {
+    c.write('HTTP/1.1 ' + code + ' ' + statusCodes[code] + '\r\n');
+    for (var header in headers) {
+        c.write(header + ': ' + headers[header] + '\r\n');
+    }
+
+    c.write('\r\n');
+}
+
 function writeConnectionCount(res) {
-    res.writeHead(200, {
+    writeHead(res, 200, {
         'Content-Type': 'text/plain',
         'Cache-Control': 'no-cache',
         'Access-Control-Allow-Origin': '*',
@@ -50,15 +77,23 @@ function writeConnectionCount(res) {
 }
 
 function writeCorsOptions(res) {
-    res.writeHead(204, {
+    writeHead(res, 204, {
         'Access-Control-Allow-Origin': '*',
         'Connection': 'close'
     });
     res.end();
 }
 
+function writeClientError(res) {
+    writeHead(res, 400, {
+        'Content-Type': 'text/plain',
+        'Connection': 'close'
+    });
+    res.end();
+}
+
 function write404(res) {
-    res.writeHead(404, {
+    writeHead(res, 404, {
         'Content-Type': 'text/plain',
         'Connection': 'close'
     });
@@ -66,11 +101,10 @@ function write404(res) {
     res.end();
 }
 
-function initClient(req, res) {
-    req.socket.setTimeout(Infinity);
-    req.socket.setNoDelay(true);
-    req.socket.setKeepAlive(true);
-    res.writeHead(200, {
+function initSseClient(res) {
+    res.setTimeout(Infinity);
+    res.setNoDelay(true);
+    writeHead(res, 200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Access-Control-Allow-Origin': '*',
@@ -91,11 +125,7 @@ function initClient(req, res) {
         };
     })(clientIndex);
 
-    // Not sure which of these are required - start with only close,
-    // then work our way down if stuff crashes
-    req.on('close',  removeClient);
-    req.on('end',    removeClient);
-    res.on('finish', removeClient);
+    res.on('end', removeClient);
 }
 
 function broadcast(data) {
@@ -105,7 +135,6 @@ function broadcast(data) {
             clients[i].write('data: ' + data + '\n\n');
         }
     }
-
 }
 
 function getArgs() {
