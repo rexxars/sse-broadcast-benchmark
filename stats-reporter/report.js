@@ -79,6 +79,7 @@ function getNetworkTiming(callback) {
     var scheduleBroadcast = function() {
         timeoutId = setTimeout(function() {
             var client = net.connect({host: ip, port: port}, function() {
+                client.setNoDelay(true);
                 var payload = ''+Date.now();
                 client.write('POST /broadcast HTTP/1.1\r\n' + 
                              'Host: ' + ip + '\r\n' + 
