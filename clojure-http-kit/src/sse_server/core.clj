@@ -1,7 +1,6 @@
 (ns sse-server.core
   (:require [org.httpkit.server :refer [run-server with-channel on-close send! close]]
-            [org.httpkit.timer :refer [schedule-task]]
-            [ring.middleware.params :refer [assoc-form-params]]))
+            [org.httpkit.timer :refer [schedule-task]]))
 
 (def channel-hub (atom {}))
 
@@ -40,16 +39,16 @@
                         (swap! channel-hub dissoc channel)))))
 
 (defn handle-broadcast [req]
-  (let [req (assoc-form-params req "UTF-8")]
-    (if (contains? (:form-params req) "data")
+  (let [body (:body req)]
+    (if (not (nil? body))
       (do
-        (broadcast (str ((:form-params req) "data") "\n"))
+        (broadcast (str "data: " (slurp body) "\n\n"))
         {:status 200
          :headers {"Content-Type" "text/plain"}
          :body (str "Broadcasted to " (count @channel-hub) " clients")})
       {:status 400
        :headers {"Content-Type" "text/plain"}
-       :body "Missing message"})))
+       :body "Empty message"})))
 
 (def uri-handlers
   {{:uri "/connections" :method :get} handle-connections
