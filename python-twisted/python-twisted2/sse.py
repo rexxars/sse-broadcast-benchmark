@@ -1,18 +1,4 @@
-import sys
-import argparse
-
-# import SSE module
-
-# Importing epoll reactor ans setting it up
-from twisted.python import log
-from twisted.internet import epollreactor
-
-epollreactor.install()
-
 from twisted.web import server, resource
-
-# Import the reactor singleton
-from twisted.internet import reactor
 
 class Root(resource.Resource):
     """
@@ -65,16 +51,21 @@ class Subscribe(resource.Resource):
 
     def add(self, request):
         self.subscribers.add(request);
-        log.msg('Establishing connection..')
 
         # Set up removal of subscriber on disconnect
         d = request.notifyFinish()
         d.addBoth(self.remove, request)
 
+    def publish_to_all(self, data):
+        for subscriber in self.subscribers:
+            for line in data:
+                subscriber.write("data: %s\n" % line)
+
+            # NOTE: the last CRLF is required to dispatch the event at the client
+            subscriber.write("\n\n")
 
     def remove(self, reason, subscriber):
         if subscriber in self.subscribers:
-            log.msg('Removing connection..')
             self.subscribers.remove(subscriber)
 
     def render_GET(self, request):
@@ -96,21 +87,26 @@ class Subscribe(resource.Resource):
 
         return "";
 
-parser = argparse.ArgumentParser(description='SSE server')
-parser.add_argument('-p', '--port', metavar='N', type=int, default=1942, help="Port number")
+class Publish(resource.Resource):
+    """
+    Publish data to subscribers
+    """
+    isLeaf = True
 
-args = parser.parse_args();
+    def __init__(self, publish_to_all):
+        self.publish_to_all = publish_to_all
 
-root      = Root()
-subscribe = Subscribe()
+    def render_POST(self, request):
+        request.setHeader('Content-Type', 'text/plain')
+        request.setHeader('Cache-Control', 'no-cache')
+        request.setHeader('Access-Control-Allow-Origin', '*')
+        request.setResponseCode(202)
 
-root.putChild('sse', subscribe)
-root.putChild('connections', Connections(subscribe.get_subscribers_count))
+        return ""
 
-site = server.Site(root)
+    def render_OPTIONS(self, request):
+        request.setHeader('Access-Control-Allow-Origin', '*')
+        request.setHeader('Connection', 'close')
 
-reactor.listenTCP(args.port, site)
+        return "";
 
-# Run the reactor
-print 'Starting the reactor.'
-reactor.run()
