@@ -102,7 +102,11 @@ class Publish(resource.Resource):
         request.setHeader('Access-Control-Allow-Origin', '*')
         request.setResponseCode(202)
 
-        return ""
+        # Extract raw request content and split lines
+        publish_lines = request.content.read().splitlines()
+
+        # Publish the lines to all subscribers
+        self.publish_to_all(publish_lines);
 
     def render_OPTIONS(self, request):
         request.setHeader('Access-Control-Allow-Origin', '*')
