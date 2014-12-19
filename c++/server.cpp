@@ -159,7 +159,7 @@ private:
 };
 
 int main(int argc, char** argv) {
-  unsigned short thread_count = 1;
+  unsigned short thread_count = 10;
   unsigned short port = 1942;
 
   // parse args
