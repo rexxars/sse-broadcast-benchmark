@@ -73,7 +73,7 @@ private:
   // minimal http request handlers
   void init_handlers() {
     http_handler::handler_map handlers = {
-      {"GET /connections", [this](std::shared_ptr<tcp::socket>& socket) {
+      {"GET /connections", [this](std::shared_ptr<tcp::socket>& socket, http_handler::read_body_func read_body) {
         std::string msg = boost::str(boost::format("%d") % _sse_client_count);
         write(socket,
           "HTTP/1.1 200 OK\r\n"
@@ -88,7 +88,7 @@ private:
             socket->shutdown(tcp::socket::shutdown_both, ec);
           });
       }},
-      {"GET /sse", [this](std::shared_ptr<tcp::socket>& socket) {
+      {"GET /sse", [this](std::shared_ptr<tcp::socket>& socket, http_handler::read_body_func read_body) {
         write(socket,
           "HTTP/1.1 200 OK\r\n"
           "Content-Type: text/event-stream\r\n"
@@ -109,7 +109,7 @@ private:
             }
           });
       }},
-      {"OPTIONS /connections", [this](std::shared_ptr<tcp::socket>& socket) {
+      {"OPTIONS /connections", [this](std::shared_ptr<tcp::socket>& socket, http_handler::read_body_func read_body) {
         write(socket,
           "HTTP/1.1 204 No Content\r\n"
           "Connection: close\r\n"
@@ -120,7 +120,7 @@ private:
             socket->shutdown(tcp::socket::shutdown_both, ec);
           });
       }},
-      {"OPTIONS /sse", [this](std::shared_ptr<tcp::socket>& socket) {
+      {"OPTIONS /sse", [this](std::shared_ptr<tcp::socket>& socket, http_handler::read_body_func read_body) {
         write(socket,
           "HTTP/1.1 204 No Content\r\n"
           "Connection: close\r\n"
@@ -131,16 +131,19 @@ private:
             socket->shutdown(tcp::socket::shutdown_both, ec);
           });
       }},
-      {"POST /broadcast", [this](std::shared_ptr<tcp::socket>& socket) {
-        broadcast("todo: broadcast actual message");
-        write(socket,
-          "HTTP/1.1 200 OK\r\n"
-          "Content-Type: text/plain\r\n"
-          "Connection: close\r\n"
-          "Cache-Control: no-cache\r\n"
-          "\r\n",
-          [this, socket](boost::system::error_code ec, std::size_t) {
-            socket->shutdown(tcp::socket::shutdown_both, ec);
+      {"POST /broadcast", [this](std::shared_ptr<tcp::socket>& socket, http_handler::read_body_func read_body) {
+        read_body(
+          [this, &socket](std::string body) {
+            broadcast(body);
+            write(socket,
+              "HTTP/1.1 200 OK\r\n"
+              "Content-Type: text/plain\r\n"
+              "Connection: close\r\n"
+              "Cache-Control: no-cache\r\n"
+              "\r\n",
+              [this, socket](boost::system::error_code ec, std::size_t) {
+                socket->shutdown(tcp::socket::shutdown_both, ec);
+              });
           });
       }}
     };
