@@ -2,6 +2,7 @@
 from twisted.internet import epollreactor
 epollreactor.install()
 
+from twisted.python import threadpool
 from twisted.application import service, internet
 from twisted.internet import task, reactor
 from twisted.web import server as twisted_server
@@ -15,6 +16,9 @@ def start():
    # Import the module containing the resources
     import sse
 
+    pool = threadpool.ThreadPool()
+    pool.start()
+
     # Prepare the app root and subscribe endpoint
     root        = sse.Root()
     subscribe   = sse.Subscribe()
@@ -25,6 +29,9 @@ def start():
     root.putChild('sse', subscribe)
     root.putChild('connections', connections)
     root.putChild('publish', publish)
+
+    # Allow Ctrl-C to get you out cleanly:
+    reactor.addSystemEventTrigger('after', 'shutdown', pool.stop)
 
     # emit an event every second
     l = task.LoopingCall(publish_timestamp, { "broadcast": subscribe.publish_to_all })
