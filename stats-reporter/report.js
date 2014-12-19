@@ -72,12 +72,20 @@ function getNetworkTiming(callback) {
     var responseTime;
     var es = new EventSource(host + '/sse');
     var start = Date.now();
+    var intervalId = setInterval(function() {
+        request.post({
+            headers: {'content-type': 'text/plain'},
+            url: host + '/broadcast',
+            body: ''+Date.now()
+        }, function(error, response, body) {});
+    }, 1000);
 
     es.onopen = function() {
         responseTime = Date.now() - start;
     };
     es.onerror = function(err) {
         console.error('Failed to request /sse when probing for response time', err);
+        clearInterval(intervalId);
         es.close();
         callback(err);
     };
