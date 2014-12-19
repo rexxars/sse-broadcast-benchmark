@@ -1,0 +1,3 @@
+#!/bin/sh
+
+twistd -ny server.py
