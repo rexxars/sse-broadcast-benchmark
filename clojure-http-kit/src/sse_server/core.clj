@@ -1,10 +1,15 @@
 (ns sse-server.core
   (:require [org.httpkit.server :refer [run-server with-channel on-close send! close]]
-            [org.httpkit.timer :refer [schedule-task]]))
+            [org.httpkit.timer :refer [schedule-task]]
+            [ring.middleware.params :refer [assoc-form-params]]))
 
 (def channel-hub (atom {}))
 
-(defn handle-cors []
+(defn broadcast [message]
+  (doseq [channel (keys @channel-hub)]
+    (send! channel message false)))
+
+(defn handle-cors [_]
   {:status 204
    :headers {"Access-Control-Allow-Origin" "*"
              "Connection" "close"}})
@@ -14,14 +19,13 @@
    :headers {"Content-Type" "text/plain"}
    :body "File not found"})
 
-(defn handle-connections []
+(defn handle-connections [_]
   {:status 200
    :headers {"Content-Type" "text/plain"
              "Access-Control-Allow-Origin" "*"
              "Cache-Control" "no-cache"
              "Connection" "close"}
    :body (str (count @channel-hub))})
-
 
 (defn handle-sse [req]
   (with-channel req channel
@@ -35,18 +39,34 @@
     (on-close channel (fn [_]
                         (swap! channel-hub dissoc channel)))))
 
+(defn handle-broadcast [req]
+  (let [req (assoc-form-params req "UTF-8")]
+    (if (contains? (:form-params req) "data")
+      (do
+        (broadcast (str ((:form-params req) "data") "\n"))
+        {:status 200
+         :headers {"Content-Type" "text/plain"}
+         :body (str "Broadcasted to " (count @channel-hub) " clients")})
+      {:status 400
+       :headers {"Content-Type" "text/plain"}
+       :body "Missing message"})))
+
+(def uri-handlers
+  {{:uri "/connections" :method :get} handle-connections
+   {:uri "/connections" :method :options} handle-cors
+   {:uri "/sse" :method :get} handle-sse
+   {:uri "/sse" :method :options} handle-cors
+   {:uri "/broadcast" :method :post} handle-broadcast})
+
 (defn app [req]
-  (if (= (:request-method req) :options)
-    (handle-cors)
-    (case (:uri req)
-      "/connections" (handle-connections)
-      "/sse" (handle-sse req)
+  (let [request-id {:uri (:uri req) :method (:request-method req)}]
+    (if (contains? uri-handlers request-id)
+      ((uri-handlers request-id) req)
       (handle-404))))
 
 (defn notify-channels []
   (let [time (System/currentTimeMillis)]
-    (doseq [channel (keys @channel-hub)]
-      (send! channel (str "data: " time "\n\n") false))))
+    (broadcast (str "data: " time "\n\n"))))
 
 (defn start-timer []
   (schedule-task 1000
