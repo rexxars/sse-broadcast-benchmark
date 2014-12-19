@@ -34,6 +34,7 @@ class Connections(resource.Resource):
     def render_OPTIONS(self, request):
         request.setHeader('Access-Control-Allow-Origin', '*')
         request.setHeader('Connection', 'close')
+        request.setResponseCode(204)
 
         return "";
 
@@ -84,6 +85,7 @@ class Subscribe(resource.Resource):
     def render_OPTIONS(self, request):
         request.setHeader('Access-Control-Allow-Origin', '*')
         request.setHeader('Connection', 'close')
+        request.setResponseCode(204)
 
         return "";
 
@@ -114,6 +116,7 @@ class Broadcast(resource.Resource):
     def render_OPTIONS(self, request):
         request.setHeader('Access-Control-Allow-Origin', '*')
         request.setHeader('Connection', 'close')
+        request.setResponseCode(204)
 
         return "";
 

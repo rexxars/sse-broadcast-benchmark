@@ -68,7 +68,7 @@ function runTests() {
     });
 
     test('sends correct cors-header', function(t) {
-        t.plan(6);
+        t.plan(8);
 
         http.get(url + '/connections', function(res) {
             t.equal(res.headers['access-control-allow-origin'], '*', '/connections should send cors header');
@@ -83,12 +83,14 @@ function runTests() {
         options.method = 'OPTIONS';
 
         http.request(options, function(res) {
+            t.equal(res.statusCode, 204, 'OPTIONS /connections should give a 204');
             t.equal(res.headers['access-control-allow-origin'], '*', 'OPTIONS /connections should send cors header');
             t.equal(res.headers['connection'], 'close', 'OPTIONS /connections should send `connection: close`');
         }).end();
 
         options.path = '/sse';
         http.request(options, function(res) {
+            t.equal(res.statusCode, 204, 'OPTIONS /sse should give a 204');
             t.equal(res.headers['access-control-allow-origin'], '*', 'OPTIONS /sse should send cors header');
             t.equal(res.headers['connection'], 'close', 'OPTIONS /sse should send `connection: close`');
         }).end();
