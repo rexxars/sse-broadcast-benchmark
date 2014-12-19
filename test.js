@@ -4,7 +4,8 @@ var net  = require('net');
 var test = require('tape');
 var http = require('http');
 var port = process.argv[2] || 1942;
-var url  = 'http://127.0.0.1:' + port;
+var host = '127.0.0.1';
+var url  = 'http://' + host + ':' + port;
 var parseUrl = require('url').parse;
 
 var conn = net.connect(port).on('error', function(e) {
@@ -47,6 +48,23 @@ function runTests() {
                 t.end();
             });
         });
+    });
+
+    test('gives a 202 on /broadcast POST', function(t) {
+        t.plan(3);
+
+        var options = parseUrl(url + '/broadcast');
+        options.method = 'POST';
+
+
+        var req = http.request(options, function(res) {
+            t.equal(res.headers['content-type'], 'text/plain', 'type should be text/plain');
+            t.equal(res.headers['cache-control'], 'no-cache', 'cache-control should be no-cache');
+            t.equal(res.headers['connection'], 'close', 'connection should be close');
+        });
+
+        req.write('foobar');
+        req.end();
     });
 
     test('sends correct cors-header', function(t) {
