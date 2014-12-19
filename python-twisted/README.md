@@ -2,16 +2,10 @@
 
 ## Installing
 
-The python-twisted implementation depends on Python, Twisted and a few python modules. If you're running ubuntu or debian, twisted is available as a package called `python-twisted`.
+The python-twisted implementation depends on Python and Twisted. If you're running ubuntu or debian, twisted is available as a package called `python-twisted`.
 
 ```bash
 $ sudo apt-get install python-twisted
-```
-
-Additionally, you need to `bottle` and `crochet` installed. The easiest way is by using pip:
-
-```bash
-$ sudo pip install bottle crochet
 ```
 
 ## Running
@@ -29,8 +23,6 @@ $ twistd -ny server.py
 ```
 
 ## Notes
-
-The solution is based on the proposed [Twisted SSE implementation](http://orestis.gr/blog/2014/02/03/wsgi-twisted-and-server-sent-events/) by [Orestis Markou](https://gist.github.com/orestis).
 
 Port number is 1942
 
