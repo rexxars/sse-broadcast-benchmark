@@ -34,15 +34,25 @@ The server has five tasks to perform:
     Access-Control-Allow-Origin: *
     Connection: close
     ```
-3. Respond to HTTP `OPTION` requests against `/connections` and `/sse` with a `204`. Headers should include:
+
+3. Respond to `POST /broadcast` with a `202`. The raw body should be broadcasted as a message to all connected clients. Headers should include:
+
+    ```
+    Content-Type: text/plain
+    Cache-Control: no-cache
+    Access-Control-Allow-Origin: *
+    Connection: close
+    ```
+
+4. Respond to HTTP `OPTION` requests against `/connections` and `/sse` with a `204`. Headers should include:
 
     ```
     Access-Control-Allow-Origin: *
     Connection: close
     ```
 
-4. Respond to all other HTTP requests with a `404`.
-5. Every 1000 milliseconds, the server should broadcast a message on all open connections. The message should be dispatched from a central location - imagine the message is received through an HTTP POST request and should be broadcasted to all clients (ie. we don't know the message content in advance).The data should simply be the current unix timestamp, including milliseconds. Example packet would be:
+5. Respond to all other HTTP requests with a `404`.
+6. Every 1000 milliseconds, the server should broadcast a message on all open connections. The message should be dispatched from a central location - imagine the message is received through an HTTP POST request and should be broadcasted to all clients (ie. we don't know the message content in advance).The data should simply be the current unix timestamp, including milliseconds. Example packet would be:
 
     ```
     data: 1418071333619\n\n
@@ -50,7 +60,7 @@ The server has five tasks to perform:
 
 ## Testing
 
-I've written a simple test to ensure the five basic rules above work as expected. It's written in node.js. Run it by installing it's dependencies (`npm install`), then doing `npm test`. If the server is not listening on port `1942`, run `node test.js <portNumber>`.
+I've written a simple test to ensure the six basic rules above work as expected. It's written in node.js. Run it by installing it's dependencies (`npm install`), then doing `npm test`. If the server is not listening on port `1942`, run `node test.js <portNumber>`.
 
 ## Additional guidelines
 
