@@ -4,8 +4,7 @@ var net  = require('net');
 var test = require('tape');
 var http = require('http');
 var port = process.argv[2] || 1942;
-var host = '127.0.0.1';
-var url  = 'http://' + host + ':' + port;
+var url  = 'http://127.0.0.1:' + port;
 var parseUrl = require('url').parse;
 
 var conn = net.connect(port).on('error', function(e) {
