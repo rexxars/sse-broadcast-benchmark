@@ -10,7 +10,7 @@ So, this thing uses SSE. SSE (Server-Sent Event/EventSource) is a really simple 
 
 ## Rules
 
-The server has five tasks to perform:
+The server has six tasks to perform:
 
 1. Respond to `/sse` with an open HTTP connection. Each connection should receive the following bytes when it opens:
 
