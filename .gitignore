@@ -30,6 +30,9 @@ node_modules
 # Users Environment Variables
 .lock-wscript
 
+# Vim noise
+.*.swp
+
 # PHP composer vendor
 php-react/vendor
 
