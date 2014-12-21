@@ -13,6 +13,7 @@ void sse_server::broadcast(const std::string& msg) {
   }
   _sse_clients_mutex.lock();
   for (auto i : dead_iterators) {
+    if (i == std::end(_sse_clients)) continue;
     _sse_clients.erase(i);
     --_sse_client_count;
   }
