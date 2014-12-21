@@ -1,3 +1,4 @@
+#include <iostream>
 #include <boost/asio.hpp>
 #include <thread>
 #include "interval.hpp"
