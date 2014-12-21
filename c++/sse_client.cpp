@@ -6,8 +6,7 @@ bool sse_client::is_dead() const {
 
 void sse_client::send(const std::string& msg) {
   if (_dead) return;
-  std::string full_msg = "data: " + msg + "\n\n";
-  auto buf = boost::asio::buffer(full_msg, full_msg.length());
+  auto buf = boost::asio::buffer(msg, msg.length());
   auto self(shared_from_this());
   boost::asio::async_write(*_socket, buf,
     [this, self](boost::system::error_code ec, std::size_t) {

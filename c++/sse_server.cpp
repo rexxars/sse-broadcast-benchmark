@@ -4,11 +4,12 @@
 #include <functional>
 
 void sse_server::broadcast(const std::string& msg) {
+  std::string full_msg = "data: " + msg + "\n\n";
   auto i = std::begin(_sse_clients);
   std::vector<std::list<std::shared_ptr<sse_client>>::iterator> dead_iterators;
   while (i != std::end(_sse_clients)) {
     if ((*i)->is_dead()) dead_iterators.push_back(i);
-    else (*i)->send(msg);
+    else (*i)->send(full_msg);
     ++i;
   }
   _sse_clients_mutex.lock();
