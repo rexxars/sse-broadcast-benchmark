@@ -49,8 +49,25 @@ function runTests() {
         });
     });
 
+    test('gives a 202 on /broadcast POST', function(t) {
+        t.plan(3);
+
+        var options = parseUrl(url + '/broadcast');
+        options.method = 'POST';
+
+
+        var req = http.request(options, function(res) {
+            t.equal(res.headers['content-type'], 'text/plain', 'type should be text/plain');
+            t.equal(res.headers['cache-control'], 'no-cache', 'cache-control should be no-cache');
+            t.equal(res.headers['connection'], 'close', 'connection should be close');
+        });
+
+        req.write('foobar');
+        req.end();
+    });
+
     test('sends correct cors-header', function(t) {
-        t.plan(6);
+        t.plan(8);
 
         http.get(url + '/connections', function(res) {
             t.equal(res.headers['access-control-allow-origin'], '*', '/connections should send cors header');
@@ -65,12 +82,14 @@ function runTests() {
         options.method = 'OPTIONS';
 
         http.request(options, function(res) {
+            t.equal(res.statusCode, 204, 'OPTIONS /connections should give a 204');
             t.equal(res.headers['access-control-allow-origin'], '*', 'OPTIONS /connections should send cors header');
             t.equal(res.headers['connection'], 'close', 'OPTIONS /connections should send `connection: close`');
         }).end();
 
         options.path = '/sse';
         http.request(options, function(res) {
+            t.equal(res.statusCode, 204, 'OPTIONS /sse should give a 204');
             t.equal(res.headers['access-control-allow-origin'], '*', 'OPTIONS /sse should send cors header');
             t.equal(res.headers['connection'], 'close', 'OPTIONS /sse should send `connection: close`');
         }).end();

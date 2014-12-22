@@ -34,6 +34,7 @@ class Connections(resource.Resource):
     def render_OPTIONS(self, request):
         request.setHeader('Access-Control-Allow-Origin', '*')
         request.setHeader('Connection', 'close')
+        request.setResponseCode(204)
 
         return "";
 
@@ -84,12 +85,13 @@ class Subscribe(resource.Resource):
     def render_OPTIONS(self, request):
         request.setHeader('Access-Control-Allow-Origin', '*')
         request.setHeader('Connection', 'close')
+        request.setResponseCode(204)
 
         return "";
 
-class Publish(resource.Resource):
+class Broadcast(resource.Resource):
     """
-    Publish data to subscribers
+    Broadcast data to subscribers
     """
     isLeaf = True
 
@@ -100,6 +102,7 @@ class Publish(resource.Resource):
         request.setHeader('Content-Type', 'text/plain')
         request.setHeader('Cache-Control', 'no-cache')
         request.setHeader('Access-Control-Allow-Origin', '*')
+        request.setHeader('Connection', 'close')
         request.setResponseCode(202)
 
         # Extract raw request content and split lines
@@ -108,9 +111,12 @@ class Publish(resource.Resource):
         # Publish the lines to all subscribers
         self.publish_to_all(publish_lines);
 
+        return "";
+
     def render_OPTIONS(self, request):
         request.setHeader('Access-Control-Allow-Origin', '*')
         request.setHeader('Connection', 'close')
+        request.setResponseCode(204)
 
         return "";
 
