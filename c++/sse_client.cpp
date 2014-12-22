@@ -10,8 +10,6 @@ void sse_client::send(const std::string& msg) {
   auto self(shared_from_this());
   boost::asio::async_write(*_socket, buf,
     [this, self](boost::system::error_code ec, std::size_t) {
-      // clients are lazily removed, meaning we won't bother
-      // detecting disconnects until a failed write is flagged
       if (ec == boost::asio::error::eof ||
           ec == boost::asio::error::connection_reset ||
           ec == boost::asio::error::broken_pipe) {

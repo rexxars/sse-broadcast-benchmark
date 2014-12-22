@@ -28,6 +28,8 @@ private:
   void init_handlers();
 
   int _sse_client_count = 0;
+  std::list<std::shared_ptr<sse_client>> _sse_new_clients;
+  std::mutex _sse_new_clients_mutex;
   std::list<std::shared_ptr<sse_client>> _sse_clients;
   std::mutex _sse_clients_mutex;
   std::shared_ptr<http_handler::handler_map> _handlers;
