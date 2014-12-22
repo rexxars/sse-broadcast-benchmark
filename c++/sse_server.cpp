@@ -73,7 +73,8 @@ void sse_server::init_handlers() {
             socket->shutdown(tcp::socket::shutdown_both, ec);
           }
           else {
-            auto& bucket = _sse_client_buckets[_sse_client_count % _sse_client_bucket_count];
+            auto& bucket = _sse_client_buckets[_bucket_roundrobin_counter % _sse_client_bucket_count];
+            ++_bucket_roundrobin_counter;
             bucket->mutex.lock();
             bucket->clients.push_back(std::make_shared<sse_client>(std::move(socket)));
             bucket->mutex.unlock();

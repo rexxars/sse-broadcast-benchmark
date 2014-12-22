@@ -15,9 +15,10 @@ struct sse_client_bucket {
 
 class sse_server {
 public:
-  sse_server(boost::asio::io_service& io_service, short port)
+  sse_server(boost::asio::io_service& io_service, unsigned short port, unsigned short bucket_count)
     : _acceptor(io_service, tcp::endpoint(tcp::v4(), port)),
-      _socket(io_service)
+      _socket(io_service),
+      _sse_client_bucket_count(bucket_count)
   {
     for (int i = 0; i < _sse_client_bucket_count; ++i) {
       _sse_client_buckets.push_back(std::make_shared<sse_client_bucket>());
@@ -36,7 +37,8 @@ private:
   void init_handlers();
 
   int _sse_client_count = 0;
-  const int _sse_client_bucket_count = 100;
+  int _bucket_roundrobin_counter = 0;
+  const int _sse_client_bucket_count;
   std::vector<std::shared_ptr<sse_client_bucket>> _sse_client_buckets;
   std::shared_ptr<http_handler::handler_map> _handlers;
   tcp::acceptor _acceptor;
