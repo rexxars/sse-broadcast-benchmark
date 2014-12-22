@@ -1,3 +1,6 @@
+#include <chrono>
+#include <thread>
+
 template<class T>
 struct node {
   node() : data(nullptr), next(nullptr) {}
@@ -25,11 +28,13 @@ public:
       //));
     // bug workaround for gcc < 4.8.3 follows ..
     node<T>* old_head = _head.load(std::memory_order_relaxed);
-    do {
+    while (true) {
       new_node->next = old_head;
-    } while (!_head.compare_exchange_weak(old_head, new_node,
-                                          std::memory_order_release,
-                                          std::memory_order_relaxed));
+      if (_head.compare_exchange_weak(old_head, new_node, std::memory_order_release, std::memory_order_relaxed)) {
+        break;
+      }
+      std::this_thread::sleep_for(std::chrono::microseconds(500));
+    }
   }
 
   void lock() {
