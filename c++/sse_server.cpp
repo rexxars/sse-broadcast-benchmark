@@ -5,27 +5,25 @@
 
 void sse_server::broadcast(const std::string& msg) {
   std::string full_msg = "data: " + msg + "\n\n";
-  _sse_clients_mutex.lock();
-  // move new clients
-  _sse_new_clients_mutex.lock();
-  _sse_clients.splice(std::end(_sse_clients), _sse_new_clients);
-  _sse_new_clients_mutex.unlock();
   // broadcast to all
-  auto i = std::begin(_sse_clients);
-  while (i != std::end(_sse_clients)) {
-    if ((*i)->is_dead()) {
-      if (i == std::end(_sse_clients)) continue;
-      auto tmp = i;
-      ++i;
-      _sse_clients.erase(tmp);
-      --_sse_client_count;
+  for (auto& bucket : _sse_client_buckets) {
+    bucket->mutex.lock();
+    auto i = std::begin(bucket->clients);
+    while (i != std::end(bucket->clients)) {
+      if ((*i)->is_dead()) {
+        if (i == std::end(bucket->clients)) continue;
+        auto tmp = i;
+        ++i;
+        bucket->clients.erase(tmp);
+        --_sse_client_count;
+      }
+      else {
+        (*i)->send(full_msg);
+        ++i;
+      }
     }
-    else {
-      (*i)->send(full_msg);
-      ++i;
-    }
+    bucket->mutex.unlock();
   }
-  _sse_clients_mutex.unlock();
 }
 
 void sse_server::do_accept() {
@@ -75,9 +73,10 @@ void sse_server::init_handlers() {
             socket->shutdown(tcp::socket::shutdown_both, ec);
           }
           else {
-            _sse_new_clients_mutex.lock();
-            _sse_new_clients.push_back(std::make_shared<sse_client>(std::move(socket)));
-            _sse_new_clients_mutex.unlock();
+            auto& bucket = _sse_client_buckets[_sse_client_count % _sse_client_bucket_count];
+            bucket->mutex.lock();
+            bucket->clients.push_back(std::make_shared<sse_client>(std::move(socket)));
+            bucket->mutex.unlock();
             ++_sse_client_count;
           }
         });

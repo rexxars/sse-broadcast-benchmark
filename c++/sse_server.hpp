@@ -8,12 +8,20 @@
 
 using boost::asio::ip::tcp;
 
+struct sse_client_bucket {
+  std::mutex mutex;
+  std::list<std::shared_ptr<sse_client>> clients;
+};
+
 class sse_server {
 public:
   sse_server(boost::asio::io_service& io_service, short port)
     : _acceptor(io_service, tcp::endpoint(tcp::v4(), port)),
       _socket(io_service)
   {
+    for (int i = 0; i < _sse_client_bucket_count; ++i) {
+      _sse_client_buckets.push_back(std::make_shared<sse_client_bucket>());
+    }
     init_handlers();
     do_accept();
   }
@@ -28,10 +36,8 @@ private:
   void init_handlers();
 
   int _sse_client_count = 0;
-  std::list<std::shared_ptr<sse_client>> _sse_new_clients;
-  std::mutex _sse_new_clients_mutex;
-  std::list<std::shared_ptr<sse_client>> _sse_clients;
-  std::mutex _sse_clients_mutex;
+  const int _sse_client_bucket_count = 100;
+  std::vector<std::shared_ptr<sse_client_bucket>> _sse_client_buckets;
   std::shared_ptr<http_handler::handler_map> _handlers;
   tcp::acceptor _acceptor;
   tcp::socket _socket;
