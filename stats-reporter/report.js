@@ -96,7 +96,7 @@ function getNetworkTiming(callback) {
     };
     es.onmessage = function(msg) {
         es.close();
-        callback(null, responseTime);
+        afterResponseTimeMeasured(null, responseTime);
     };
 }
 
