@@ -7,9 +7,9 @@ void sse_server::broadcast(const std::string& msg) {
   std::string full_msg = "data: " + msg + "\n\n";
   _sse_clients_mutex.lock();
   // move new clients
-  //_sse_new_clients_mutex.lock();
+  _sse_new_clients_mutex.lock();
   _sse_clients.splice(std::end(_sse_clients), _sse_new_clients);
-  //_sse_new_clients_mutex.unlock();
+  _sse_new_clients_mutex.unlock();
   // broadcast to all
   auto i = std::begin(_sse_clients);
   while (i != std::end(_sse_clients)) {
@@ -75,9 +75,9 @@ void sse_server::init_handlers() {
             socket->shutdown(tcp::socket::shutdown_both, ec);
           }
           else {
-            //_sse_new_clients_mutex.lock();
+            _sse_new_clients_mutex.lock();
             _sse_new_clients.push_back(std::make_shared<sse_client>(std::move(socket)));
-            //_sse_new_clients_mutex.unlock();
+            _sse_new_clients_mutex.unlock();
             ++_sse_client_count;
           }
         });
