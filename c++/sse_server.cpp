@@ -5,25 +5,38 @@
 
 void sse_server::broadcast(const std::string& msg) {
   std::string full_msg = "data: " + msg + "\n\n";
-  // broadcast to all
-  for (auto& bucket : _sse_client_buckets) {
-    bucket->mutex.lock();
-    auto i = std::begin(bucket->clients);
-    while (i != std::end(bucket->clients)) {
-      if ((*i)->is_dead()) {
-        if (i == std::end(bucket->clients)) continue;
-        auto tmp = i;
-        ++i;
-        bucket->clients.erase(tmp);
-        --_sse_client_count;
-      }
-      else {
-        (*i)->send(full_msg);
-        ++i;
-      }
-    }
-    bucket->mutex.unlock();
+  _sse_clients.lock();
+  auto iterator = _sse_clients.get_head();
+  std::vector<node<std::shared_ptr<sse_client>>*> dead_nodes;
+  while (iterator != nullptr) {
+    if (iterator->data->is_dead()) dead_nodes.push_back(iterator);
+    else iterator->data->send(full_msg);
+    iterator = iterator->next;
   }
+  for (auto& dead_node : dead_nodes) {
+    _sse_clients.remove(dead_node);
+    --_sse_client_count;
+  }
+  _sse_clients.unlock();
+  // broadcast to all
+  //for (auto& bucket : _sse_client_buckets) {
+    //bucket->mutex.lock();
+    //auto i = std::begin(bucket->clients);
+    //while (i != std::end(bucket->clients)) {
+      //if ((*i)->is_dead()) {
+        //if (i == std::end(bucket->clients)) continue;
+        //auto tmp = i;
+        //++i;
+        //bucket->clients.erase(tmp);
+        //--_sse_client_count;
+      //}
+      //else {
+        //(*i)->send(full_msg);
+        //++i;
+      //}
+    //}
+    //bucket->mutex.unlock();
+  //}
 }
 
 void sse_server::do_accept() {
@@ -73,11 +86,12 @@ void sse_server::init_handlers() {
             socket->shutdown(tcp::socket::shutdown_both, ec);
           }
           else {
-            auto& bucket = _sse_client_buckets[_bucket_roundrobin_counter % _sse_client_bucket_count];
-            ++_bucket_roundrobin_counter;
-            bucket->mutex.lock();
-            bucket->clients.push_back(std::make_shared<sse_client>(std::move(socket)));
-            bucket->mutex.unlock();
+            //auto& bucket = _sse_client_buckets[_bucket_roundrobin_counter % _sse_client_bucket_count];
+            //++_bucket_roundrobin_counter;
+            //bucket->mutex.lock();
+            //bucket->clients.push_back(std::make_shared<sse_client>(std::move(socket)));
+            //bucket->mutex.unlock();
+            _sse_clients.push(std::make_shared<sse_client>(std::move(socket)));
             ++_sse_client_count;
           }
         });

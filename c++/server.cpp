@@ -7,12 +7,11 @@
 int main(int argc, char** argv) {
   unsigned short thread_count = 10;
   unsigned short port = 1942;
-  unsigned short bucket_count = 200;
 
   // parse args
   std::vector<std::string> args(argv + 1, argv + argc);
   if (std::find(args.begin(), args.end(), "-h") != args.end()) {
-    std::cout << argv[0] << " [-p port] [-t threads] [-b buckets] [--time-broadcast]" << std::endl;
+    std::cout << argv[0] << " [-p port] [-t threads] [--time-broadcast]" << std::endl;
     return 0;
   }
 
@@ -37,19 +36,9 @@ int main(int argc, char** argv) {
     thread_count = std::stoi(*(pos + 1));
   }
 
-  if (std::find(args.begin(), args.end(), "-b") != args.end()) {
-    auto pos = std::find(args.begin(), args.end(), "-b");
-    if (pos + 1 == args.end()) {
-      std::cerr << "Invalid bucket argument" << std::endl;
-      return 1;
-    }
-    bucket_count = std::stoi(*(pos + 1));
-  }
-  std::cout << "* Spreading clients across " << bucket_count << " buckets" << std::endl;
-
   // init server
   boost::asio::io_service io_service;
-  sse_server s(io_service, port, bucket_count);
+  sse_server s(io_service, port);
   if (enable_interval) {
     // run an intervalled broadcast - don't bother cleaning the pointer
     interval* ival = new interval(io_service, 1, [&s]() {
