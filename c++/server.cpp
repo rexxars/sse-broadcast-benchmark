@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
   // parse args
   std::vector<std::string> args(argv + 1, argv + argc);
   if (std::find(args.begin(), args.end(), "-h") != args.end()) {
-    std::cout << argv[0] << " [-p port] [-t threads] [--time-broadcast]" << std::endl;
+    std::cout << argv[0] << " [-p port] [-t threads] [-b buckets] [--time-broadcast]" << std::endl;
     return 0;
   }
 
