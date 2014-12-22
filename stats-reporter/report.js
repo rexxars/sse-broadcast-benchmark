@@ -50,6 +50,7 @@ function gatherStats() {
         if (err) {
             return;
         }
+
         reportStats(results);
     });
 }
@@ -74,76 +75,43 @@ function getNetworkTiming(callback) {
     var responseTime;
     var es = new EventSource(host + '/sse');
     var start = Date.now();
-    var afterResponseTimeMeasured = function(error) {
-      if (error) {
-        callback(error);
-        return;
-      }
-      fetchDeliveryTiming(function(deliveryTime) {
-        callback(null, {
-            responseTime: responseTime,
-            deliveryTime: deliveryTime
-        });
-      });
-    };
+    var timeoutId;
+    var scheduleBroadcast = function() {
+        timeoutId = setTimeout(function() {
+            var client = net.connect({host: ip, port: port}, function() {
+                client.setNoDelay(true);
+                var payload = ''+Date.now();
+                client.write('POST /broadcast HTTP/1.1\r\n' + 
+                             'Host: ' + ip + '\r\n' + 
+                             'Content-Type: text/plain\r\n' + 
+                             'Content-Length: ' + payload.length + '\r\n' +
+                             '\r\n' +
+                             payload);
+            });
+        }, 1000);
+    }
+
     es.onopen = function() {
         responseTime = Date.now() - start;
+        scheduleBroadcast();
     };
     es.onerror = function(err) {
         console.error('Failed to request /sse when probing for response time', err);
+        if (timeoutId != -1) {
+          clearTimeout(timeoutId);
+          timeoutId = -1;
+        }
         es.close();
         callback(err);
     };
     es.onmessage = function(msg) {
         es.close();
-        callback(null, responseTime);
+        callback(null, {
+            responseTime: responseTime,
+            deliveryTime: Date.now() - parseInt(msg.data, 10)
+        });
     };
 }
-
-var fetchDeliveryTiming = (function() {
-    var deliveryTimingRunning = false;
-    var cb = function() {};
-    function getDeliveryTiming(callback) {
-        cb = callback;
-        if (deliveryTimingRunning) return;
-        deliveryTimingRunning = true;
-        var es = new EventSource(host + '/sse');
-        var start = Date.now();
-        var timeoutId;
-        var scheduleBroadcast = function() {
-            timeoutId = setTimeout(function() {
-                var client = net.connect({host: ip, port: port}, function() {
-                    client.setNoDelay(true);
-                    var payload = ''+Date.now();
-                    client.write('POST /broadcast HTTP/1.1\r\n' + 
-                                 'Host: ' + ip + '\r\n' + 
-                                 'Content-Type: text/plain\r\n' + 
-                                 'Content-Length: ' + payload.length + '\r\n' +
-                                 '\r\n' +
-                                 payload);
-                });
-            }, 1000);
-        }
-
-        es.onopen = function() {
-            scheduleBroadcast();
-        };
-        es.onerror = function(err) {
-            deliveryTimingRunning = false;
-            console.error('Failed to request /sse when probing for delivery time', err);
-            if (timeoutId != -1) {
-              clearTimeout(timeoutId);
-              timeoutId = -1;
-            }
-            es.close();
-        };
-        es.onmessage = function(msg) {
-            cb(Date.now() - parseInt(msg.data, 10));
-            scheduleBroadcast();
-        };
-    }
-    return getDeliveryTiming;
-})();
 
 function getConnectionCount(callback) {
     request(host + '/connections', function(err, res, body) {
