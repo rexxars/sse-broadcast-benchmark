@@ -12,7 +12,16 @@ public:
   singlylist() {
     _head.store(nullptr);
   }
+
+  void lock() {
+    _mutex.lock();
+  }
+
+  void unlock() {
+    _mutex.unlock();
+  }
   
+  // does not require locking
   void push(const T& data) {
     node<T>* new_node = new node<T>(data);
     //new_node->next = head.load(std::memory_order_relaxed);
@@ -32,14 +41,7 @@ public:
                                           std::memory_order_relaxed));
   }
 
-  void lock() {
-    _mutex.lock();
-  }
-
-  void unlock() {
-    _mutex.unlock();
-  }
-
+  // requires locking
   void remove(node<T>* remove_node) {
     node<T>* iterator = _head.load(std::memory_order_relaxed);
     node<T>* prev_iterator = nullptr;
@@ -67,6 +69,7 @@ public:
     }
   }
 
+  // does not require locking
   node<T>* get_front() {
     return _head.load(std::memory_order_relaxed); 
   }
