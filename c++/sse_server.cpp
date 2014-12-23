@@ -5,6 +5,7 @@
 
 void sse_server::broadcast(const std::string& msg) {
   std::string full_msg = "data: " + msg + "\n\n";
+  int removed = 0;
   for (auto& bucket : _sse_client_buckets) {
     bucket->lock();
     auto iterator = bucket->get_front();
@@ -17,8 +18,12 @@ void sse_server::broadcast(const std::string& msg) {
     for (auto& dead_node : dead_nodes) {
       bucket->remove(dead_node);
       --_sse_client_count;
+      ++removed;
     }
     bucket->unlock();
+  }
+  if (_verbose) {
+    std::cout << "Removed " << removed << " dead connections during broadcast" << std::endl;
   }
 }
 

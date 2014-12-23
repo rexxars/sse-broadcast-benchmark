@@ -12,10 +12,11 @@ using boost::asio::ip::tcp;
 
 class sse_server {
 public:
-  sse_server(boost::asio::io_service& io_service, unsigned short port, unsigned short bucket_count)
+  sse_server(boost::asio::io_service& io_service, unsigned short port, unsigned short bucket_count, bool verbose)
     : _acceptor(io_service, tcp::endpoint(tcp::v4(), port)),
       _socket(io_service),
-      _sse_client_bucket_count(bucket_count)
+      _sse_client_bucket_count(bucket_count),
+      _verbose(verbose)
   {
     for (auto i = 0; i < bucket_count; ++i) {
       _sse_client_buckets.push_back(std::make_shared<singlylist<std::shared_ptr<sse_client>>>());
@@ -33,8 +34,9 @@ private:
   void write(std::shared_ptr<tcp::socket>& socket, const std::string& msg, write_cb cb);
   void init_handlers();
 
+  bool _verbose;
   int _sse_client_count = 0;
-  int _sse_client_bucket_count;
+  const int _sse_client_bucket_count;
   int _sse_client_bucket_counter = 0;
   std::vector<std::shared_ptr<singlylist<std::shared_ptr<sse_client>>>> _sse_client_buckets;
   std::shared_ptr<http_handler::handler_map> _handlers;
