@@ -42,7 +42,7 @@ public:
 
   void remove(node<T>* remove_node) {
     node<T>* iterator = _head.load(std::memory_order_relaxed);
-    node<T>* prev = nullptr;
+    node<T>* prev_iterator = nullptr;
     if (iterator == remove_node) {
       // catch special case for first element
       // replace the head with whatever next points to (nullptr or value)
@@ -53,16 +53,16 @@ public:
       // else: another thread raced us to insert a new head, so move along
     }
     // process the other (not head) elements
-    prev = iterator;
+    prev_iterator = iterator;
     iterator = iterator->next;
     while (iterator != nullptr) {
       if (iterator == remove_node) {
-        prev->next = iterator->next;
+        prev_iterator->next = iterator->next;
         iterator->data = nullptr;
         delete remove_node;
         break;
       }
-      prev = iterator;
+      prev_iterator = iterator;
       iterator = iterator->next;
     }
   }
