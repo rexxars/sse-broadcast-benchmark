@@ -9,6 +9,8 @@ struct node {
 template<class T>
 class singlylist {
 public:
+  typedef node<T>* NODE_PTR;
+
   singlylist() {
     _head.store(nullptr);
   }

@@ -29,6 +29,8 @@ public:
 
 private:
   typedef std::function<void(boost::system::error_code, std::size_t)> write_cb;
+  typedef singlylist<std::shared_ptr<sse_client>> bucket_type;
+  typedef std::shared_ptr<bucket_type> bucket_ptr_type;
 
   void do_accept();
   void write(std::shared_ptr<tcp::socket>& socket, const std::string& msg, write_cb cb);
@@ -38,7 +40,7 @@ private:
   int _sse_client_count = 0;
   const int _sse_client_bucket_count;
   int _sse_client_bucket_counter = 0;
-  std::vector<std::shared_ptr<singlylist<std::shared_ptr<sse_client>>>> _sse_client_buckets;
+  std::vector<bucket_ptr_type> _sse_client_buckets;
   std::shared_ptr<http_handler::handler_map> _handlers;
   tcp::acceptor _acceptor;
   tcp::socket _socket;

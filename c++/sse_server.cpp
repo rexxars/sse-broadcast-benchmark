@@ -2,28 +2,28 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/format.hpp>
 #include <functional>
+#include <forward_list>
 
 void sse_server::broadcast(const std::string& msg) {
   std::string full_msg = "data: " + msg + "\n\n";
-  int removed = 0;
+  std::forward_list<std::tuple<bucket_ptr_type&, bucket_type::NODE_PTR&>> dead_nodes;
   for (auto& bucket : _sse_client_buckets) {
     bucket->lock();
     auto iterator = bucket->get_front();
-    std::vector<node<std::shared_ptr<sse_client>>*> dead_nodes;
     while (iterator != nullptr) {
-      if (iterator->data->is_dead()) dead_nodes.push_back(iterator);
+      if (iterator->data->is_dead()) dead_nodes.push_front(std::make_tuple(std::ref(bucket), std::ref(iterator)));
       else iterator->data->send(full_msg);
       iterator = iterator->next;
     }
-    for (auto& dead_node : dead_nodes) {
-      bucket->remove(dead_node);
-      --_sse_client_count;
-      ++removed;
-    }
     bucket->unlock();
   }
-  if (_verbose) {
-    std::cout << "Removed " << removed << " dead connections during broadcast" << std::endl;
+  for (auto& dead_node : dead_nodes) {
+    auto& bucket = std::get<0>(dead_node);
+    bucket->lock();
+    auto& node = std::get<1>(dead_node);
+    bucket->remove(node);
+    --_sse_client_count;
+    bucket->unlock();
   }
 }
 
