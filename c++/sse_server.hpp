@@ -12,7 +12,7 @@ using boost::asio::ip::tcp;
 
 class sse_server {
 public:
-  sse_server(boost::asio::io_service& io_service, unsigned short port, unsigned short bucket_count, bool verbose)
+  sse_server(boost::asio::io_service& io_service, unsigned short port, unsigned short bucket_count)
     : _acceptor(io_service, tcp::endpoint(tcp::v4(), port)),
       _socket(io_service),
       _sse_client_bucket_count(bucket_count)
