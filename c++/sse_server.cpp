@@ -2,16 +2,15 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/format.hpp>
 #include <functional>
-#include <forward_list>
 
 void sse_server::broadcast(const std::string& msg) {
   std::string full_msg = "data: " + msg + "\n\n";
-  std::forward_list<std::tuple<bucket_ptr_type, bucket_type::NODE_PTR>> remove_tuples;
+  std::vector<std::tuple<bucket_ptr_type, bucket_type::NODE_PTR>> remove_tuples;
   for (auto& bucket : _sse_client_buckets) {
     bucket->lock();
     bucket_type::NODE_PTR iterator = bucket->get_front();
     while (iterator != nullptr) {
-      if (iterator->data->is_dead()) remove_tuples.push_front(std::make_tuple(bucket, iterator));
+      if (iterator->data->is_dead()) remove_tuples.push_back(std::make_tuple(bucket, iterator));
       else iterator->data->send(full_msg);
       iterator = iterator->next;
     }
