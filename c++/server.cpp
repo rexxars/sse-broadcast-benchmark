@@ -12,12 +12,11 @@ int main(int argc, char** argv) {
   // parse args
   std::vector<std::string> args(argv + 1, argv + argc);
   if (std::find(args.begin(), args.end(), "-h") != args.end()) {
-    std::cout << argv[0] << " [-p port] [-t threads] [-b buckets] [-v] [--time-broadcast]" << std::endl;
+    std::cout << argv[0] << " [-p port] [-t threads] [-b buckets] [--time-broadcast]" << std::endl;
     return 0;
   }
 
   bool enable_interval = std::find(args.begin(), args.end(), "--time-broadcast") != args.end();
-  bool verbose = std::find(args.begin(), args.end(), "-v") != args.end();
 
   if (std::find(args.begin(), args.end(), "-p") != args.end()) {
     auto pos = std::find(args.begin(), args.end(), "-p");
@@ -49,7 +48,7 @@ int main(int argc, char** argv) {
 
   // init server
   boost::asio::io_service io_service;
-  sse_server s(io_service, port, bucket_count, verbose);
+  sse_server s(io_service, port, bucket_count);
   if (enable_interval) {
     // run an intervalled broadcast - don't bother cleaning the pointer
     interval* ival = new interval(io_service, 1, [&s]() {
