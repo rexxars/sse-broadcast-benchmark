@@ -44,7 +44,7 @@ public:
   }
 
   // requires locking
-  void remove(node<T>* remove_node) {
+  bool remove(node<T>* remove_node) {
     node<T>* iterator = _head.load(std::memory_order_relaxed);
     node<T>* prev_iterator = nullptr;
     if (iterator == remove_node) {
@@ -52,7 +52,7 @@ public:
       // replace the head with whatever next points to (nullptr or value)
       if (_head.compare_exchange_weak(iterator, iterator->next, std::memory_order_release, std::memory_order_relaxed)) {
         delete remove_node;
-        return;
+        return true;
       }
       // else: another thread raced us to insert a new head, so move along
     }
@@ -64,11 +64,12 @@ public:
         prev_iterator->next = iterator->next;
         iterator->data = nullptr;
         delete remove_node;
-        break;
+        return true;
       }
       prev_iterator = iterator;
       iterator = iterator->next;
     }
+    return false;
   }
 
   // does not require locking

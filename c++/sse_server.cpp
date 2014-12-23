@@ -6,23 +6,21 @@
 
 void sse_server::broadcast(const std::string& msg) {
   std::string full_msg = "data: " + msg + "\n\n";
-  std::forward_list<std::tuple<bucket_ptr_type&, bucket_type::NODE_PTR&>> dead_nodes;
+  std::forward_list<std::tuple<bucket_ptr_type, bucket_type::NODE_PTR>> remove_tuples;
   for (auto& bucket : _sse_client_buckets) {
     bucket->lock();
-    auto iterator = bucket->get_front();
+    bucket_type::NODE_PTR iterator = bucket->get_front();
     while (iterator != nullptr) {
-      if (iterator->data->is_dead()) dead_nodes.push_front(std::make_tuple(std::ref(bucket), std::ref(iterator)));
+      if (iterator->data->is_dead()) remove_tuples.push_front(std::make_tuple(bucket, iterator));
       else iterator->data->send(full_msg);
       iterator = iterator->next;
     }
     bucket->unlock();
   }
-  for (auto& dead_node : dead_nodes) {
-    auto& bucket = std::get<0>(dead_node);
+  for (auto& remove_tuple : remove_tuples) {
+    auto bucket = std::get<0>(remove_tuple);
     bucket->lock();
-    auto& node = std::get<1>(dead_node);
-    bucket->remove(node);
-    --_sse_client_count;
+    if (bucket->remove(std::get<1>(remove_tuple))) --_sse_client_count;
     bucket->unlock();
   }
 }
