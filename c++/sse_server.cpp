@@ -6,7 +6,7 @@
 void sse_server::broadcast(const std::string& msg) {
   std::string full_msg = "data: " + msg + "\n\n";
   std::vector<std::tuple<bucket_ptr_type, bucket_type::NODE_PTR>> remove_tuples;
-  // benchmarking seems to indicate that client removal for each bucket as they are 
+  // benchmarking seems to indicate that client removal for each bucket as they are
   // processed beats removing all after a full broadcast - I'm having trouble grasping why.
   for (auto& bucket : _sse_client_buckets) {
     bucket->lock();
@@ -107,7 +107,7 @@ void sse_server::init_handlers() {
         [this, &socket](std::string body) {
           broadcast(body);
           write(socket,
-            "HTTP/1.1 200 OK\r\n"
+            "HTTP/1.1 202 Accepted\r\n"
             "Content-Type: text/plain\r\n"
             "Connection: close\r\n"
             "Cache-Control: no-cache\r\n"
