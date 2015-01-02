@@ -141,6 +141,7 @@ function runTests() {
         }, 150);
     });
 
+    /*
     test('either discards or accepts chunked transfers (with no content-length)', function(t) {
         var sseBody = '';
         var sseReq = http.get(url + '/sse', function(res) {
@@ -189,5 +190,6 @@ function runTests() {
             }, 150);
         });
     });
+    */
 
 }
