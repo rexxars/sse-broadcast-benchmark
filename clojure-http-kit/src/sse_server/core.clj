@@ -43,7 +43,7 @@
     (if (not (nil? body))
       (do
         (broadcast (str "data: " (slurp body) "\n\n"))
-        {:status 200
+        {:status 202
          :headers {"Content-Type" "text/plain"}
          :body (str "Broadcasted to " (count @channel-hub) " clients")})
       {:status 400
@@ -82,4 +82,4 @@
   (let [port (parse-port args)]
     (run-server app {:port port :thread 8 :queue-size 300000})
     (start-timer)
-    (print (str "Listening on http://127.0.0.1:" port))))
+    (print (str "Listening on http://127.0.0.1:" port "\n"))))
