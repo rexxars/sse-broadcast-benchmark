@@ -8,6 +8,7 @@ var cluster = require('cluster');
 var numCPUs = require('os').cpus().length;
 var statusCodes = {
     200: 'OK',
+    202: 'Accepted',
     204: 'No Content',
     404: 'File not found',
     400: 'Client error',
@@ -65,7 +66,7 @@ function handleRequest(method, path, body, res) {
         writeCorsOptions(res);
     } else if (method === 'POST' && path === '/broadcast') {
         broadcast(body);
-        writeHead(res, 200, { 'Connection': 'close' });
+        writeHead(res, 202, { 'Connection': 'close' });
         res.end();
     } else if (path === '/connections') {
         writeConnectionCount(res);
@@ -88,8 +89,8 @@ function handlePostRequest(buffer, c) {
 
     // We have headers, but no content-length
     if (!length) {
-        writeHead(res, 411, { 'Connection': 'close' });
-        c.end();
+        writeHead(c, 411, { 'Connection': 'close' });
+        c.destroy();
         return;
     }
 
