@@ -9,12 +9,9 @@ var EventSource = require('eventsource'),
     fs      = require('fs'),
     async   = require('async'),
     os      = require('os'),
-    net     = require('net'),
     usage   = require('usage'),
     args    = require('./args')(),
-    ip      = '127.0.0.1',
-    port    = args.port,
-    host    = 'http://' + ip + ':' + port,
+    host    = 'http://localhost:' + args.port,
     impFile = __dirname + '/../' + args.implementation + '/server',
     cmdArgs = ['--port', args.port],
     cmd     = impFile,
@@ -75,32 +72,12 @@ function getNetworkTiming(callback) {
     var responseTime;
     var es = new EventSource(host + '/sse');
     var start = Date.now();
-    var timeoutId;
-    var scheduleBroadcast = function() {
-        timeoutId = setTimeout(function() {
-            var client = net.connect({host: ip, port: port}, function() {
-                client.setNoDelay(true);
-                var payload = ''+Date.now();
-                client.write('POST /broadcast HTTP/1.1\r\n' + 
-                             'Host: ' + ip + '\r\n' + 
-                             'Content-Type: text/plain\r\n' + 
-                             'Content-Length: ' + payload.length + '\r\n' +
-                             '\r\n' +
-                             payload);
-            });
-        }, 1000);
-    }
 
     es.onopen = function() {
         responseTime = Date.now() - start;
-        scheduleBroadcast();
     };
     es.onerror = function(err) {
         console.error('Failed to request /sse when probing for response time', err);
-        if (timeoutId != -1) {
-          clearTimeout(timeoutId);
-          timeoutId = -1;
-        }
         es.close();
         callback(err);
     };
