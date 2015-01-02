@@ -34,19 +34,29 @@ The server has five tasks to perform:
     Access-Control-Allow-Origin: *
     Connection: close
     ```
-3. Respond to HTTP `OPTION` requests against `/connections` and `/sse` with a `204`. Headers should include:
+
+3. Respond to HTTP `OPTIONS` requests against `/connections` and `/sse` with a `204`. Headers should include:
 
     ```
     Access-Control-Allow-Origin: *
     Connection: close
     ```
 
-4. Respond to all other HTTP requests with a `404`.
-5. Every 1000 milliseconds, the server should broadcast a message on all open connections. The message should be dispatched from a central location - imagine the message is received through an HTTP POST request and should be broadcasted to all clients (ie. we don't know the message content in advance).The data should simply be the current unix timestamp, including milliseconds. Example packet would be:
+4. Respond to HTTP `POST` requests against `/broadcast` with a `202`. The server should take the entire request body and broadcast the data found to all clients. For example, when sending a POST-request with the following body:
 
-    ```
-    data: 1418071333619\n\n
-    ```
+   ```
+   this is a message - broadcast it!
+   ```
+
+The clients subscribing to `/sse` should receive:
+
+   ```
+   data: this is a message - broadcast it!
+   ```
+
+Requests without a Content-Length *can* be discarded, but in this case the server needs to respond with a `411`. If the server handles chunked transfer encoding, feel free to broadcast the message as one normally would.
+
+5. Respond to all other HTTP requests with a `404`.
 
 ## Testing
 
