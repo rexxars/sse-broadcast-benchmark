@@ -9,9 +9,12 @@ var EventSource = require('eventsource'),
     fs      = require('fs'),
     async   = require('async'),
     os      = require('os'),
+    net     = require('net'),
     usage   = require('usage'),
     args    = require('./args')(),
-    host    = 'http://localhost:' + args.port,
+    ip      = '127.0.0.1',
+    port    = args.port,
+    host    = 'http://' + ip + ':' + port,
     impFile = __dirname + '/../' + args.implementation + '/server',
     cmdArgs = ['--port', args.port],
     cmd     = impFile,
@@ -72,23 +75,88 @@ function getNetworkTiming(callback) {
     var responseTime;
     var es = new EventSource(host + '/sse');
     var start = Date.now();
-
     es.onopen = function() {
         responseTime = Date.now() - start;
+        es.close();
+        afterResponseTimeMeasured(null, responseTime);
     };
     es.onerror = function(err) {
         console.error('Failed to request /sse when probing for response time', err);
+        if (timeoutId != -1) {
+            clearTimeout(timeoutId);
+            timeoutId = -1;
+        }
         es.close();
         callback(err);
     };
-    es.onmessage = function(msg) {
-        es.close();
-        callback(null, {
-            responseTime: responseTime,
-            deliveryTime: Date.now() - parseInt(msg.data, 10)
+    var afterResponseTimeMeasured = function(error) {
+        if (error) return callback(error);
+        fetchDeliveryTiming(function(deliveryTime) {
+            callback(null, {
+                responseTime: responseTime,
+                deliveryTime: deliveryTime
+            });
         });
     };
 }
+
+function sendTimestampBroadcast() {
+    var client = net.connect({host: ip, port: port}, function() {
+        client.setNoDelay(true);
+        var payload = ''+Date.now();
+        client.write('POST /broadcast HTTP/1.1\r\n' + 
+                     'Host: ' + ip + '\r\n' + 
+                     'Content-Type: text/plain\r\n' + 
+                     'Content-Length: ' + payload.length + '\r\n' +
+                     '\r\n' +
+                     payload);
+    });
+}
+
+// Schedules timestamps to be broadcast every second.
+// Parameter: callback to be executed when the next timing data is available.
+// Note: This is a crude approach, as nothing more advanced is needed.
+//       This means that a call to fetchDeliveryTiming will overwrite
+//       the callback provided by any earlier (incomplete) call - causing that network timing
+//       data never to be available. That's fine, since we aren't bothered by
+//       irregular network timings. This shouldn't happen very often, though, as
+//       delivery timing rarely takes more than one second to complete.
+var fetchDeliveryTiming = (function() {
+    var broadcastInterval = 1000;
+    var deliveryTimingRunning = false;
+    var cb = null;
+    function getDeliveryTiming(callback) {
+        cb = callback;
+        if (deliveryTimingRunning) return;
+        deliveryTimingRunning = true;
+        var es = new EventSource(host + '/sse');
+        var start = Date.now();
+        var timeoutId = -1;
+        var scheduleBroadcast = function() {
+            timeoutId = setTimeout(sendTimestampBroadcast, broadcastInterval);
+        }
+        es.onopen = function() {
+            scheduleBroadcast();
+        };
+        es.onerror = function(err) {
+            deliveryTimingRunning = false;
+            console.error('Failed to request /sse when testing delivery time', err);
+            if (timeoutId != -1) {
+                clearTimeout(timeoutId);
+                timeoutId = -1;
+            }
+            es.close();
+        };
+        es.onmessage = function(msg) {
+            if (cb != null) {
+                cb(Date.now() - parseInt(msg.data, 10));
+                cb = null;
+            }
+            scheduleBroadcast();
+        };
+    }
+    return getDeliveryTiming;
+})();
 
 function getConnectionCount(callback) {
     request(host + '/connections', function(err, res, body) {
@@ -110,3 +178,4 @@ function onStatsReported(err, res) {
         return console.error('Failed reporting statistics: ', err || 'HTTP ' + res.statusCode);
     }
 }
+
