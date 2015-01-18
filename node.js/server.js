@@ -6,15 +6,18 @@
 var net = require('net');
 var cluster = require('cluster');
 var numCPUs = require('os').cpus().length;
-var statusCodes = { 200: 'OK', 204: 'No Content', 404: 'File not found', 400: 'Client error' };
+var statusCodes = {
+    200: 'OK',
+    202: 'Accepted',
+    204: 'No Content',
+    404: 'File not found',
+    400: 'Client error',
+    411: 'Length required'
+};
 
 var args = getArgs();
 var port = args.port || 1942;
 var clients = [], numClients = 0;
-
-setInterval(function() {
-    broadcast(Date.now());
-}, 1000);
 
 if (args.cluster && cluster.isMaster) {
     console.log('Forking ' + numCPUs + ' processes');
@@ -23,16 +26,31 @@ if (args.cluster && cluster.isMaster) {
     }
 } else {
     net.createServer(function(c) {
-        var buffer = '';
+        var buffer = '', header, parts, body;
         var parseData = function(chunk) {
             buffer += chunk;
 
-            for (var i = 0; i < chunk.length; i++) {
-                if (chunk[i] === 10) {
-                    c.removeListener('data', parseData);
-                    return handleRequest(buffer.slice(0, i - 1).toString(), c);
+            // Check for the first carriage return character, indicating a complete first line
+            if (!header) {
+                for (var i = 0; i < chunk.length; i++) {
+                    if (chunk[i] !== 10) {
+                        continue;
+                    }
+
+                    header = buffer.slice(0, i - 1).toString();
+                    parts = header.split(' ', 3);
+
+                    if (parts[0] !== 'POST') {
+                        // Stop reading data from non-POST requests
+                        c.removeListener('data', parseData);
+                        handleRequest(parts[0], parts[1], body, c);
+                        return;
+                    }
                 }
             }
+
+            // If this is a POST-request, wait for a complete POST body
+            handlePostRequest(buffer, c);
         };
 
         c.on('data', parseData);
@@ -41,19 +59,50 @@ if (args.cluster && cluster.isMaster) {
     });
 }
 
-function handleRequest(header, res) {
-    var parts = header.split(' ', 3);
-    if (parts.length < 3) {
+function handleRequest(method, path, body, res) {
+    if (!method || !path) {
         writeClientError(res);
-    } else if (parts[0] === 'OPTIONS') {
+    } else if (method === 'OPTIONS') {
         writeCorsOptions(res);
-    } else if (parts[1].indexOf('/connections') === 0) {
+    } else if (method === 'POST' && path === '/broadcast') {
+        broadcast(body);
+        writeHead(res, 202, { 'Connection': 'close' });
+        res.end();
+    } else if (path === '/connections') {
         writeConnectionCount(res);
-    } else if (parts[1] === '/sse') {
+    } else if (path === '/sse') {
         initSseClient(res);
     } else {
         write404(res);
     }
+}
+
+function handlePostRequest(buffer, c) {
+    var bodyOffset = buffer.indexOf('\r\n\r\n') + 4;
+    if (bodyOffset < 4) {
+        // Headers are not done yet
+        return;
+    }
+
+    var headers = buffer.substr(0, bodyOffset),
+        length = headers.match(/content-length:\s*(\d+)\r/i);
+
+    // We have headers, but no content-length
+    if (!length) {
+        writeHead(c, 411, { 'Connection': 'close' });
+        c.destroy();
+        return;
+    }
+
+    // We have a content length, but do we have a complete body?
+    if (buffer.length - bodyOffset !== parseInt(length[1], 10)) {
+        // No!
+        return;
+    }
+
+    var parts = headers.split(' ', 3);
+    handleRequest(parts[0], parts[1], buffer.substr(bodyOffset), c);
+    return;
 }
 
 function writeHead(c, code, headers) {

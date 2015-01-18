@@ -22,13 +22,13 @@ def start():
     # Prepare the app root and subscribe endpoint
     root        = sse.Root()
     subscribe   = sse.Subscribe()
-    publish     = sse.Publish(subscribe.publish_to_all)
+    broadcast   = sse.Broadcast(subscribe.publish_to_all)
     connections = sse.Connections(subscribe.get_subscribers_count)
 
     # Add sse and connections as children of root
     root.putChild('sse', subscribe)
     root.putChild('connections', connections)
-    root.putChild('publish', publish)
+    root.putChild('broadcast', broadcast)
 
     # Allow Ctrl-C to get you out cleanly:
     reactor.addSystemEventTrigger('after', 'shutdown', pool.stop)

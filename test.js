@@ -3,6 +3,7 @@
 var net  = require('net');
 var test = require('tape');
 var http = require('http');
+var request = require('request');
 var port = process.argv[2] || 1942;
 var url  = 'http://127.0.0.1:' + port;
 var parseUrl = require('url').parse;
@@ -50,7 +51,7 @@ function runTests() {
     });
 
     test('sends correct cors-header', function(t) {
-        t.plan(6);
+        t.plan(8);
 
         http.get(url + '/connections', function(res) {
             t.equal(res.headers['access-control-allow-origin'], '*', '/connections should send cors header');
@@ -65,12 +66,14 @@ function runTests() {
         options.method = 'OPTIONS';
 
         http.request(options, function(res) {
+            t.equal(res.statusCode, 204, 'OPTIONS /connections should give a 204');
             t.equal(res.headers['access-control-allow-origin'], '*', 'OPTIONS /connections should send cors header');
             t.equal(res.headers['connection'], 'close', 'OPTIONS /connections should send `connection: close`');
         }).end();
 
         options.path = '/sse';
         http.request(options, function(res) {
+            t.equal(res.statusCode, 204, 'OPTIONS /sse should give a 204');
             t.equal(res.headers['access-control-allow-origin'], '*', 'OPTIONS /sse should send cors header');
             t.equal(res.headers['connection'], 'close', 'OPTIONS /sse should send `connection: close`');
         }).end();
@@ -102,34 +105,91 @@ function runTests() {
         });
     });
 
-    test('sends timestamps every second', function(t) {
-        var body = '';
+    test('sends messages received by POST to /broadcast', function(t) {
+        var payload1 = '' + Date.now() + Math.random();
+        var payload2 = '' + Date.now() + Math.random();
+        var body = '', statusCode;
         var req = http.get(url + '/sse', function(res) {
             res.on('data', function(chunk) {
                 body += chunk.toString();
             });
         });
 
+        request({
+            uri: url + '/broadcast',
+            method: 'POST',
+            body: payload1
+        }, function(err, res) {
+            t.equal(res.statusCode, 202, 'server should give 202 when posting to /broadcast');
+        });
+
+        request({
+            uri: url + '/broadcast',
+            method: 'POST',
+            body: payload2
+        }, function(err, res) {
+            t.equal(res.statusCode, 202, 'server should give 202 when posting to /broadcast');
+        });
+
         setTimeout(function() {
             req.abort();
 
-            var dataPattern = /data:\s(\d{13})\n\n/g;
-
-            var match, matches = [];
-            while (match = dataPattern.exec(body)) {
-                matches.push(parseInt(match[1], 10));
-            }
-
-            t.ok(matches.length >= 3, 'should receive 3 or more messages');
-
-            var threshold = Date.now() - 4000, now = Date.now();
-            for (var i = 0; i < matches.length; i++) {
-                t.ok(matches[i] > threshold, 'timestamp should not be older than 4 seconds');
-                t.ok(matches[i] <= now, 'timestamp should be older than current timestamp');
-            }
+            t.ok(body.indexOf('data: ' + payload1 + '\n\n') > -1, 'should receive broadcasted messages')
+            t.ok(body.indexOf('data: ' + payload2 + '\n\n') > -1, 'should receive broadcasted messages')
 
             t.end();
-        }, 3150);
+        }, 150);
     });
+
+    /*
+    test('either discards or accepts chunked transfers (with no content-length)', function(t) {
+        var sseBody = '';
+        var sseReq = http.get(url + '/sse', function(res) {
+            res.on('data', function(chunk) {
+                sseBody += chunk.toString();
+            });
+        });
+
+        var response = '';
+        var conn = net.connect(port).on('error', function() {
+            // Disregard errors, they're usually "connection is closed"-messages
+        }).on('data', function(data) {
+            response += data.toString();
+        }).on('connect', function() {
+            conn.write('POST /broadcast HTTP/1.1\r\n');
+            conn.write('Host: localhost:' + port + '\r\n');
+            conn.write('content-type: text/plain\r\n');
+            conn.write('Transfer-Encoding: chunked\r\n');
+            conn.write('\r\n');
+            conn.write('6\r\n');
+            conn.write('We are\r\n');
+
+            setTimeout(function() {
+                conn.write('9\r\n');
+                conn.write(' winners!');
+                conn.write('0\r\n\r\n')
+                conn.end();
+            }, 50);
+        }).on('end', function() {
+            setTimeout(function() {
+                sseReq.abort();
+
+                var match = response.match(/^HTTP\/\d\.\d\s(\d+)/),
+                    resCode = match ? match[1] | 0 : null,
+                    msgRcvd = sseBody.indexOf('data: We are winners!') > -1;
+
+                if (!resCode) {
+                    t.fail('Failed to get a proper HTTP response from /broadcast');
+                } else if (resCode === 202) {
+                    t.ok(msgRcvd, '"We are winners!"-message should be broadcasted')
+                } else {
+                    t.ok(resCode === 411, 'Response code should be 411 if rejected');
+                }
+
+                t.end();
+            }, 150);
+        });
+    });
+    */
 
 }
